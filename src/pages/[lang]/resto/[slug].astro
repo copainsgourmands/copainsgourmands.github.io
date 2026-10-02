@@ -81,7 +81,7 @@ const others = restaurants
         <div class="actions">
           <a class="btn btn-blue" href={mapsUrl} target="_blank" rel="noopener">🧭 {t(lang, 'resto.directions')}</a>
           {r.instagram_url && <a class="btn btn-accent" href={r.instagram_url} target="_blank" rel="noopener">📸 {t(lang, 'resto.instagram')}</a>}
-          {r.instagram_handle && <a class="btn btn-accent" href={`https://www.instagram.com/${r.instagram_handle}/`} target="_blank" rel="noopener">📸 @{r.instagram_handle}</a>}
+          {r.instagram_handle && <a class="btn" href={`https://www.instagram.com/${r.instagram_handle}/`} target="_blank" rel="noopener">@{r.instagram_handle}</a>}
         </div>
       </div>
     </div>
