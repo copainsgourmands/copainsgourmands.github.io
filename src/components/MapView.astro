@@ -1,0 +1,137 @@
+---
+import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import { url, t, type Lang } from '../lib/i18n';
+
+interface Point { slug: string; name: string; lat: number | null; lng: number | null; ratingLabel: string; color: string; area: string; cuisine: string | null; emoji: string; family: string; photo: string | null }
+interface Props { points: Point[]; lang: Lang; height?: string; zoom?: number; center?: [number, number]; cluster?: boolean; fit?: boolean; mode?: 'photo' | 'label' }
+const { points, lang, height = '480px', zoom = 12, center = [48.8607, 2.3522], cluster = true, fit = false, mode = 'photo' } = Astro.props;
+const config = {
+  points: points.map((p) => ({ ...p, photo: p.photo ? url(p.photo) : null, href: url(`${lang}/resto/${p.slug}/`) })),
+  zoom, center, cluster, fit, cta: t(lang, 'resto.seeCard'),
+};
+---
+<div class="map" style={`height:${height}`} data-mode={mode} data-map={JSON.stringify(config)}></div>
+
+<script>
+  import L from 'leaflet';
+
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
+  async function init(el: HTMLElement) {
+    const cfg = JSON.parse(el.dataset.map!);
+    const map = L.map(el, { scrollWheelZoom: false, zoomControl: true }).setView(cfg.center, cfg.zoom);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+      className: 'tiles',
+    }).addTo(map);
+
+    let layer: L.LayerGroup = L.layerGroup();
+    if (cfg.cluster) {
+      (window as any).L = L;
+      await import('leaflet.markercluster');
+      layer = (L as any).markerClusterGroup({
+        showCoverageOnHover: false,
+        // Regroupement seulement quand on dézoome beaucoup ; à l'échelle d'un quartier, chaque resto a son épingle
+        // (sauf ceux au même endroit, qui s'écartent au clic).
+        maxClusterRadius: (zoom: number) => (zoom <= 8 ? 60 : zoom <= 11 ? 25 : 6),
+        iconCreateFunction: (c: any) =>
+          L.divIcon({ html: `<span>${c.getChildCount()}</span>`, className: 'pin-cluster', iconSize: [44, 44] }),
+      });
+    }
+
+    // Une épingle contient les deux rendus ; l'attribut data-mode de la carte choisit lequel s'affiche.
+    const markers: { marker: L.Marker; family: string }[] = [];
+    for (const p of cfg.points) {
+      const rating = p.ratingLabel ? ` <small>${esc(p.ratingLabel)}★</small>` : '';
+      const icon = L.divIcon({
+        className: 'pin',
+        html: `<span class="bubble">${p.photo ? `<img src="${p.photo}" alt="" loading="lazy">` : ''}</span>`
+          + `<i class="emo">${p.emoji}</i>`
+          + `<span class="lbl">${p.emoji} ${esc(p.name)}${rating}</span>`,
+        iconSize: [0, 0],
+        iconAnchor: [0, 0],
+        popupAnchor: [0, -58],
+      });
+      const popup = `
+        <a class="pop" href="${p.href}">
+          ${p.photo ? `<img src="${p.photo}" alt="">` : ''}
+          <strong>${esc(p.name)}</strong>
+          <span>${esc(p.area)}${p.cuisine ? ' · ' + esc(p.cuisine) : ''}</span>
+          <em>${p.ratingLabel ? `${esc(p.ratingLabel)}/5 ★ — ` : ''}${esc(cfg.cta)} →</em>
+        </a>`;
+      const marker = L.marker([p.lat, p.lng], { icon, title: p.name }).bindPopup(popup, { maxWidth: 220 });
+      markers.push({ marker, family: p.family });
+    }
+    const show = (family: string | null) => {
+      layer.clearLayers();
+      const shown = markers.filter((m) => !family || m.family === family).map((m) => m.marker);
+      if ((layer as any).addLayers) (layer as any).addLayers(shown);
+      else shown.forEach((m) => layer.addLayer(m));
+    };
+    show(el.dataset.family || null);  // filtre déjà choisi avant la fin du chargement
+    layer.addTo(map);
+    // Filtre par famille de cuisine (boutons de la page Carte).
+    el.addEventListener('map:filter', (e) => show((e as CustomEvent).detail));
+    if (cfg.fit && cfg.points.length > 1) {
+      map.fitBounds(L.latLngBounds(cfg.points.map((p: any) => [p.lat, p.lng])), { padding: [40, 40] });
+    }
+    el.addEventListener('map:fit', (e) => {
+      const [[s, w], [n, east]] = (e as CustomEvent).detail;
+      map.flyToBounds(L.latLngBounds([s, w], [n, east]).pad(0.15), { maxZoom: 15, duration: 0.8 });
+    });
+    // Molette active seulement après un clic, pour ne pas piéger le scroll de la page.
+    map.once('click focus', () => map.scrollWheelZoom.enable());
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-map]').forEach(init);
+</script>
+
+<style is:global>
+  .map { width: 100%; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; z-index: 0; background: var(--blue-soft); box-shadow: var(--shadow); }
+  .tiles { filter: saturate(.35) contrast(.98) brightness(1.02); }
+  /* L'icône Leaflet fait 0×0 et se trouve pile sur le point : le contenu est placé au-dessus, pointe en bas. */
+  .pin { cursor: pointer; }
+  .pin:hover { z-index: 1000 !important; }
+  .pin .bubble {
+    position: absolute; left: -25px; bottom: 9px; width: 50px; height: 50px; padding: 3px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 0 2px var(--blue), 0 6px 14px -4px rgba(1, 24, 90, .55); transition: transform .15s;
+    transform-origin: 50% 100%;
+  }
+  .pin .bubble img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+  .pin .bubble::after {
+    content: ''; position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%);
+    border: 6px solid transparent; border-top: 9px solid var(--blue); border-bottom: 0;
+  }
+  .pin:hover .bubble { transform: scale(1.18); }
+  .pin .emo {
+    position: absolute; left: 8px; bottom: 5px; width: 24px; height: 24px; display: grid; place-items: center;
+    font-style: normal; font-size: 13px; line-height: 1; background: #fff; border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--blue); pointer-events: none;
+  }
+  .pin .lbl {
+    position: absolute; left: 0; bottom: 8px; transform: translateX(-50%); white-space: nowrap;
+    background: #fff; color: var(--ink); border: 2px solid var(--blue); border-radius: 999px; padding: 3px 10px;
+    font-family: var(--font-body); font-weight: 700; font-size: .78rem; line-height: 1.3;
+    box-shadow: 0 6px 14px -6px rgba(1, 24, 90, .55);
+  }
+  .pin .lbl small { color: var(--ink-soft); font-weight: 600; }
+  .pin .lbl::after {
+    content: ''; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%);
+    border: 5px solid transparent; border-top: 6px solid var(--blue); border-bottom: 0;
+  }
+  .pin:hover .lbl { background: var(--blue); color: #fff; }
+  .map[data-mode='photo'] .pin .lbl, .map[data-mode='label'] .pin .bubble, .map[data-mode='label'] .pin .emo { display: none; }
+  .pin-cluster span {
+    display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+    background: var(--blue); color: #fff; border: 3px solid var(--accent); box-shadow: 0 4px 12px -2px rgba(1, 24, 90, .5); font-family: var(--font-display); font-weight: 800;
+  }
+  .leaflet-popup-content-wrapper { border-radius: 16px; box-shadow: var(--shadow-lg); padding: 0; overflow: hidden; }
+  .leaflet-popup-content { margin: 0; width: 200px !important; }
+  .pop { display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: var(--ink); padding-bottom: 10px; }
+  .pop img { width: 100%; height: 110px; object-fit: cover; margin-bottom: 8px; }
+  .pop strong { font-family: var(--font-display); font-size: 1.05rem; padding: 0 12px; }
+  .pop span { font-size: .8rem; color: var(--ink-soft); padding: 0 12px; }
+  .pop em { font-style: normal; font-weight: 700; font-size: .8rem; color: var(--blue); padding: 4px 12px 0; }
+</style>

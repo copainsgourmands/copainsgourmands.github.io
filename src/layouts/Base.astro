@@ -1,0 +1,42 @@
+---
+import '../styles/global.css';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import { t, type Lang } from '../lib/i18n';
+import { IS_DEMO } from '../lib/restaurants';
+import { SITE } from '../lib/site';
+
+interface Props { lang: Lang; title?: string; description?: string; fullBleed?: boolean }
+const { lang, title, description, fullBleed = false } = Astro.props;
+const pageTitle = title ? `${title} · ${SITE.name}` : SITE.name;
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description ?? t(lang, 'hero.title')} />
+    <meta name="theme-color" content="#02237d" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description ?? t(lang, 'hero.title')} />
+    <link rel="icon" href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/favicon.svg`} type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
+    <slot name="head" />
+  </head>
+  <body class={fullBleed ? 'full-bleed' : ''}>
+    {IS_DEMO && <div class="demo-banner">{t(lang, 'demo.banner')}</div>}
+    <Navbar lang={lang} />
+    <main><slot /></main>
+    {!fullBleed && <Footer lang={lang} />}
+  </body>
+</html>
+
+<style>
+  .demo-banner {
+    background: var(--accent); color: #fff; text-align: center;
+    font-size: .8rem; font-weight: 600; padding: 6px 16px;
+  }
+</style>

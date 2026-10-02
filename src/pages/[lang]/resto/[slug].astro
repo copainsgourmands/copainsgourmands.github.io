@@ -1,0 +1,144 @@
+---
+import Base from '../../../layouts/Base.astro';
+import StarRating from '../../../components/StarRating.astro';
+import RestaurantCard from '../../../components/RestaurantCard.astro';
+import MapView from '../../../components/MapView.astro';
+import { t, url, LANGS, formatMonth, type Lang } from '../../../lib/i18n';
+import { restaurants, areaLabel, mapPoints, type Restaurant } from '../../../lib/restaurants';
+
+export function getStaticPaths() {
+  return LANGS.flatMap((lang) => restaurants.map((r) => ({ params: { lang, slug: r.slug }, props: { r } })));
+}
+
+const lang = Astro.params.lang as Lang;
+const { r } = Astro.props as { r: Restaurant };
+const point = mapPoints(lang).find((p) => p.slug === r.slug);
+// Les @mentions de la légende deviennent des liens vers les comptes Instagram.
+const reviewParts = r.review.split(/(@[\w.]*\w)/g);
+const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${r.name} ${r.address}`)}`;
+const others_addresses = r.other_addresses ?? [];
+
+// Suggestions : même quartier ou même cuisine, puis les mieux notés.
+const others = restaurants
+  .filter((o) => o.slug !== r.slug)
+  .map((o) => ({ o, score: (o.cuisine === r.cuisine ? 2 : 0) + (o.city === r.city && o.arrondissement === r.arrondissement ? 3 : 0) + (o.rating ?? 0) / 5 }))
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 3)
+  .map((x) => x.o);
+---
+<Base lang={lang} title={r.name} description={r.review.slice(0, 155)}>
+  <article class="wrap resto">
+    <a class="back link-arrow" href={url(`${lang}/catalogue/`)}>← {t(lang, 'resto.back')}</a>
+
+    <div class="layout">
+      <div class="gallery">
+        <div class="slides" id="slides">
+          {r.photos.map((p, i) => <img src={url(p)} alt={`${r.name} – ${i + 1}`} loading={i ? 'lazy' : 'eager'} />)}
+        </div>
+        {r.photos.length > 1 && (
+          <div class="dots" id="dots">
+            {r.photos.map((_, i) => <button type="button" aria-label={`Photo ${i + 1}`} class:list={{ on: i === 0 }}></button>)}
+          </div>
+        )}
+      </div>
+
+      <div class="info">
+        <span class="sticker">{areaLabel(r, lang)}</span>
+        <h1>{r.name}</h1>
+        <div class="chips">
+          {r.cuisine && <span>{r.cuisine}</span>}
+          {r.price && <span>{r.price}</span>}
+          <span>{t(lang, 'resto.visited')} {formatMonth(r.date, lang)}</span>
+        </div>
+
+        {r.rating != null && (
+          <div class="rating-box">
+            <p class="label">{t(lang, 'resto.myRating')}</p>
+            <StarRating rating={r.rating} lang={lang} size="lg" />
+          </div>
+        )}
+
+        {r.review && (
+          <div class="review">
+            <p class="label">{t(lang, 'resto.myReview')}</p>
+            <blockquote>
+              {reviewParts.map((part) =>
+                part.startsWith('@')
+                  ? <a href={`https://www.instagram.com/${part.slice(1)}/`} target="_blank" rel="noopener">{part}</a>
+                  : part,
+              )}
+            </blockquote>
+          </div>
+        )}
+
+        {r.address && <p class="address"><strong>{t(lang, 'resto.address')} :</strong> {r.address}</p>}
+        {others_addresses.length > 0 && (
+          <div class="others">
+            <p><strong>{t(lang, others_addresses.length > 1 ? 'resto.otherAddresses' : 'resto.otherAddress')} :</strong></p>
+            <ul>{others_addresses.map((a) => <li>{a}</li>)}</ul>
+          </div>
+        )}
+        <div class="actions">
+          <a class="btn btn-blue" href={mapsUrl} target="_blank" rel="noopener">🧭 {t(lang, 'resto.directions')}</a>
+          {r.instagram_url && <a class="btn btn-accent" href={r.instagram_url} target="_blank" rel="noopener">📸 {t(lang, 'resto.instagram')}</a>}
+          {r.instagram_handle && <a class="btn btn-accent" href={`https://www.instagram.com/${r.instagram_handle}/`} target="_blank" rel="noopener">📸 @{r.instagram_handle}</a>}
+        </div>
+      </div>
+    </div>
+
+    {point && (
+      <div class="mini-map">
+        <MapView points={[point]} lang={lang} height="300px" zoom={15} center={[r.lat!, r.lng!]} cluster={false} />
+      </div>
+    )}
+
+    {others.length > 0 && (
+      <section class="section">
+        <div class="section-head"><h2>{t(lang, 'resto.nearby')}</h2></div>
+        <div class="grid">{others.map((o) => <RestaurantCard r={o} lang={lang} />)}</div>
+      </section>
+    )}
+  </article>
+</Base>
+
+<script>
+  const slides = document.getElementById('slides');
+  const dots = document.querySelectorAll<HTMLButtonElement>('#dots button');
+  if (slides && dots.length) {
+    dots.forEach((d, i) => d.addEventListener('click', () => slides.scrollTo({ left: i * slides.clientWidth, behavior: 'smooth' })));
+    slides.addEventListener('scroll', () => {
+      const i = Math.round(slides.scrollLeft / slides.clientWidth);
+      dots.forEach((d, j) => d.classList.toggle('on', i === j));
+    }, { passive: true });
+  }
+</script>
+
+<style>
+  .resto { padding-top: 24px; }
+  .back { display: inline-block; margin-bottom: 20px; }
+  .layout { display: grid; gap: 28px; }
+  @media (min-width: 900px) { .layout { grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; } .layout .gallery { position: sticky; top: 88px; } }
+  .gallery { border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-lg); position: relative; }
+  .slides { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .slides::-webkit-scrollbar { display: none; }
+  .slides img { flex: 0 0 100%; width: 100%; aspect-ratio: 1; object-fit: cover; scroll-snap-align: start; }
+  .dots { position: absolute; bottom: 12px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; }
+  .dots button { width: 8px; height: 8px; border-radius: 50%; border: 0; background: rgba(255,255,255,.6); padding: 0; cursor: pointer; transition: width .25s, background-color .25s; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+  .dots button.on { background: #fff; width: 22px; border-radius: 99px; }
+  h1 { font-size: clamp(2.4rem, 6vw, 4rem); margin: 14px 0 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips span { border-radius: 999px; padding: 4px 13px; font-size: .85rem; font-weight: 500; color: var(--blue); background: var(--blue-soft); }
+  .label { text-transform: uppercase; letter-spacing: .14em; font-size: .72rem; font-weight: 700; color: var(--ink-soft); margin: 0 0 6px; }
+  .rating-box { margin: 26px 0; padding: 16px 20px; border-radius: var(--radius-sm); background: var(--accent); color: #fff; display: inline-block; }
+  .rating-box :global(.fill) { color: #fff; }
+  .rating-box :global(.track) { color: rgba(255, 255, 255, .3); }
+  blockquote { margin: 0; font-size: 1.15rem; line-height: 1.6; border-left: 3px solid var(--accent); padding-left: 20px; white-space: pre-line; }
+  blockquote a { color: var(--blue); font-weight: 700; }
+  .chips + .review { margin-top: 26px; }
+  .address { margin: 26px 0 16px; color: var(--ink-soft); }
+  .others { margin: -6px 0 16px; color: var(--ink-soft); }
+  .others p { margin: 0 0 4px; }
+  .others ul { margin: 0; padding-left: 20px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .mini-map { margin-top: 48px; }
+</style>

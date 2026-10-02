@@ -1,0 +1,45 @@
+---
+import { t, url, otherLang, type Lang } from '../lib/i18n';
+import { SITE } from '../lib/site';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const path = Astro.url.pathname;
+const swapped = path.replace(new RegExp(`/${lang}(/|$)`), `/${otherLang(lang)}$1`);
+const links = [
+  { href: url(`${lang}/`), label: t(lang, 'nav.home'), match: (p: string) => /\/(fr|en)\/?$/.test(p) },
+  { href: url(`${lang}/catalogue/`), label: t(lang, 'nav.catalogue'), match: (p: string) => p.includes('/catalogue') || p.includes('/resto/') },
+  { href: url(`${lang}/carte/`), label: t(lang, 'nav.map'), match: (p: string) => p.includes('/carte') },
+];
+---
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="logo" href={url(`${lang}/`)}>
+      <img class="logo-dot" src={url('avatar.webp')} alt="" width="36" height="36" />
+      <span>{SITE.name}</span>
+    </a>
+    <nav aria-label="Navigation">
+      {links.map((l) => (
+        <a href={l.href} class:list={['nav-link', { active: l.match(path) }]}>{l.label}</a>
+      ))}
+      <a class="lang" href={swapped} hreflang={otherLang(lang)}>{t(lang, 'lang.switch')}</a>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .nav { background: var(--blue); color: #fff; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 12px; }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; white-space: nowrap; }
+  .logo-dot { width: 36px; height: 36px; background: #fff; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
+  nav { display: flex; align-items: center; gap: 4px; }
+  .nav-link { text-decoration: none; font-weight: 500; color: rgba(255,255,255,.85); padding: 8px 12px; border-radius: 999px; font-size: .95rem; }
+  .nav-link:hover { background: rgba(255,255,255,.1); color: #fff; }
+  .nav-link.active { background: var(--paper); color: var(--blue); font-weight: 600; }
+  .lang { margin-left: 6px; text-decoration: none; font-weight: 700; font-size: .75rem; letter-spacing: .06em; color: #fff; border: 1.5px solid rgba(255,255,255,.5); padding: 5px 11px; border-radius: 999px; transition: background-color .2s, color .2s; }
+  .lang:hover { background: var(--accent); border-color: var(--accent); }
+  @media (max-width: 560px) {
+    .logo span:last-child { display: none; }
+    .nav-link { padding: 7px 9px; font-size: .88rem; }
+  }
+</style>

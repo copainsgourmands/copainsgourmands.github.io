@@ -1,0 +1,538 @@
+{
+ "ban:1 rue du Pré aux Clercs, 75007 Paris": {
+  "lat": 48.856661,
+  "lng": 2.33037,
+  "postcode": "75007",
+  "city": "Paris",
+  "label": "1 Rue du Pré aux Clercs 75007 Paris"
+ },
+ "osm:Ashtari, Kuta, Lombok": {
+  "lat": -8.8825325,
+  "lng": 116.2645873,
+  "postcode": "83573",
+  "city": "Kuta",
+  "label": "Jalan Selong Belanak - Kuta, 83573 Kuta"
+ },
+ "ban:6 rue Meissonier, 75017 Paris": {
+  "lat": 48.883118,
+  "lng": 2.304513,
+  "postcode": "75017",
+  "city": "Paris",
+  "label": "6 Rue Meissonier 75017 Paris"
+ },
+ "ban:36 rue Saint-Sulpice, 75006 Paris": {
+  "lat": 48.851364,
+  "lng": 2.334862,
+  "postcode": "75006",
+  "city": "Paris",
+  "label": "36 Rue Saint-Sulpice 75006 Paris"
+ },
+ "ban:8 rue Levert, 75020 Paris": {
+  "lat": 48.873648,
+  "lng": 2.390504,
+  "postcode": "75020",
+  "city": "Paris",
+  "label": "8 Rue Levert 75020 Paris"
+ },
+ "ban:14 rue du Bac, 75007 Paris": {
+  "lat": 48.858451,
+  "lng": 2.328405,
+  "postcode": "75007",
+  "city": "Paris",
+  "label": "14 Rue du Bac 75007 Paris"
+ },
+ "ban:1 rue du Sabot, 75006 Paris": {
+  "lat": 48.853034,
+  "lng": 2.331418,
+  "postcode": "75006",
+  "city": "Paris",
+  "label": "1 Rue du Sabot 75006 Paris"
+ },
+ "ban:124 rue de Grenelle, 75007 Paris": {
+  "lat": 48.857195,
+  "lng": 2.318979,
+  "postcode": "75007",
+  "city": "Paris",
+  "label": "124 Rue de Grenelle 75007 Paris"
+ },
+ "ban:129 rue du Faubourg-Saint-Honoré, 75008 Paris": {
+  "lat": 48.873339,
+  "lng": 2.309267,
+  "postcode": "75008",
+  "city": "Paris",
+  "label": "129 Rue du Faubourg Saint-Honoré 75008 Paris"
+ },
+ "ban:Pavillon Ledoyen, 8 avenue Dutuit, 75008 Paris": {
+  "lat": 48.866128,
+  "lng": 2.3163,
+  "postcode": "75008",
+  "city": "Paris",
+  "label": "8 Avenue Dutuit 75008 Paris"
+ },
+ "ban:5 rue des Petits Hôtels, 75010 Paris": {
+  "lat": 48.877267,
+  "lng": 2.354506,
+  "postcode": "75010",
+  "city": "Paris",
+  "label": "5 Rue des Petits Hôtels 75010 Paris"
+ },
+ "osmaddr:Iztaccihuatl 54, Colonia Condesa, Cuauhtémoc, 06100 Ciudad de México, Mexico City": {
+  "lat": 19.4102265,
+  "lng": -99.1693479,
+  "postcode": "06100",
+  "city": "Ciudad de México",
+  "label": "54 Calle Iztaccihuatl, 06100 Ciudad de México"
+ },
+ "osmaddr:5 rue Grégoire de Tours, 75006 Paris": {
+  "lat": 48.8534393,
+  "lng": 2.3379529,
+  "postcode": "75006",
+  "city": "Paris",
+  "label": "5 Rue Grégoire de Tours, 75006 Paris"
+ },
+ "osmaddr:163 Gloucester Rd, South Kensington, London": {
+  "lat": 51.4969245,
+  "lng": -0.1835299,
+  "postcode": "SW7 4QN",
+  "city": "Greater London",
+  "label": "Gloucester Road, SW7 4QN Greater London"
+ },
+ "osmaddr:62 rue de Bellechasse, 75007 Paris": {
+  "lat": 48.8561731,
+  "lng": 2.320814,
+  "postcode": "75007",
+  "city": "Paris",
+  "label": "62 Rue de Bellechasse, 75007 Paris"
+ },
+ "osmaddr:36 rue de Grenelle, 75007 Paris": {
+  "lat": 48.8538669,
+  "lng": 2.3274765,
+  "postcode": "75007",
+  "city": "Paris",
+  "label": "36 Rue de Grenelle, 75007 Paris"
+ },
+ "osmaddr:38 rue Croix-des-Petits-Champs, 75001 Paris": {
+  "lat": 48.8643792,
+  "lng": 2.3403631,
+  "postcode": "75001",
+  "city": "Paris",
+  "label": "38 Rue Croix des Petits Champs, 75001 Paris"
+ },
+ "osmaddr:184A Kensington Park Road, London": {
+  "lat": 51.5153623,
+  "lng": -0.2055479,
+  "postcode": "W11 2ES",
+  "city": "Greater London",
+  "label": "184a Kensington Park Road, W11 2ES Greater London"
+ },
+ "osmaddr:88 rue Charenton, 75012 Paris": {
+  "lat": 48.8518177,
+  "lng": 2.371725,
+  "postcode": "75012",
+  "city": "Paris",
+  "label": "Rue de Charenton, 75012 Paris"
+ },
+ "osmaddr:136 rue Saint-Maur, 75011 Paris": {
+  "lat": 48.8682663,
+  "lng": 2.3751463,
+  "postcode": "75011",
+  "city": "Paris",
+  "label": "134;136 Rue Saint-Maur, 75011 Paris"
+ },
+ "osm:Marezia, Be Tulum, Tulum": null,
+ "osmaddr:Be Tulum, Tulum": {
+  "lat": 20.205756,
+  "lng": -87.4706317,
+  "postcode": "77765",
+  "city": "Tulum",
+  "label": "Zac-Be, 77765 Tulum"
+ },
+ "osmaddr:55 avenue de Saxe, 75007 Paris": {
+  "lat": 48.8468342,
+  "lng": 2.3128379,
+  "postcode": "75007",
+  "city": "Paris",
+  "label": "55 Avenue de Saxe, 75007 Paris"
+ },
+ "osmaddr:9 rue Duban, 75016 Paris": {
+  "lat": 48.856907,
+  "lng": 2.2776554,
+  "postcode": "75016",
+  "city": "Paris",
+  "label": "9 Rue Duban, 75016 Paris"
+ },
+ "osm:Blanco Colima, Roma Norte, Mexico City": null,
+ "osmaddr:Roma Norte, Mexico City": {
+  "lat": 19.4183227,
+  "lng": -99.1625655,
+  "postcode": "06700",
+  "city": "Ciudad de México",
+  "label": "06700 Ciudad de México"
+ },
+ "osmaddr:Edgar Allan Poe 41, Polanco, Ciudad de México, Mexico City": {
+  "lat": 19.4290659,
+  "lng": -99.200327,
+  "postcode": "11540",
+  "city": "Ciudad de México",
+  "label": "Calle Edgar Allan Poe, 11540 Ciudad de México"
+ },
+ "osmaddr:25 Avenue Pierre 1er de Serbie, 75016 Paris": null,
+ "osmaddr:6 rue du Sabot, 75006 Paris": {
+  "lat": 48.8527635,
+  "lng": 2.3314677,
+  "postcode": "75006",
+  "city": "Paris",
+  "label": "6 Rue du Sabot, 75006 Paris"
+ },
+ "osmaddr:23 rue des Jeûneurs, 75002 Paris": {
+  "lat": 48.8693314,
+  "lng": 2.3449516,
+  "postcode": "75002",
+  "city": "Paris",
+  "label": "23 Rue des Jeûneurs, 75002 Paris"
+ },
+ "osmaddr:38 rue du Faubourg Poissonnière, 75010 Paris": {
+  "lat": 48.873527,
+  "lng": 2.3479885,
+  "postcode": "75009",
+  "city": "Paris",
+  "label": "38 Rue du Faubourg Poissonnière, 75009 Paris"
+ },
+ "osmaddr:14 rue Saint-Sauveur, 75002 Paris": {
+  "lat": 48.866058,
+  "lng": 2.3486715,
+  "postcode": "75002",
+  "city": "Paris",
+  "label": "14 Rue Saint-Sauveur, 75002 Paris"
+ },
+ "osmaddr:44 rue Pastourelle, 75003 Paris": {
+  "lat": 48.8632391,
+  "lng": 2.3586557,
+  "postcode": "75003",
+  "city": "Paris",
+  "label": "44 Rue Pastourelle, 75003 Paris"
+ },
+ "osmaddr:Calle de Caracas 21, Chamberí, Madrid": {
+  "lat": 40.4307791,
+  "lng": -3.6944733,
+  "postcode": "28010",
+  "city": "Madrid",
+  "label": "21 Calle de Caracas, 28010 Madrid"
+ },
+ "osmaddr:42 Albemarle Street, Mayfair, London": {
+  "lat": 51.5084811,
+  "lng": -0.1414863,
+  "postcode": "W1S 4JH",
+  "city": "City of Westminster",
+  "label": "42 Albemarle Street, W1S 4JH City of Westminster"
+ },
+ "osm:Kricket, Shoreditch, London": {
+  "lat": 51.5251008,
+  "lng": -0.0809712,
+  "postcode": "EC2A 3PB",
+  "city": "Greater London",
+  "label": "35-42 Charlotte Road, EC2A 3PB Greater London"
+ },
+ "osmaddr:Abbaye des Vaux de Cernay, 78720 Cernay-la-Ville": {
+  "lat": 48.6842046,
+  "lng": 1.9358878,
+  "postcode": "78720",
+  "city": "Cernay-la-Ville",
+  "label": "78720"
+ },
+ "osmaddr:41 North Audley Street, London": {
+  "lat": 51.5124352,
+  "lng": -0.1534299,
+  "postcode": "W1K 6ZD",
+  "city": "City of Westminster",
+  "label": "41 North Audley Street, W1K 6ZD City of Westminster"
+ },
+ "osmaddr:9 place des Vosges, 75004 Paris": {
+  "lat": 48.8554221,
+  "lng": 2.3641612,
+  "postcode": "75004",
+  "city": "Paris",
+  "label": "9 Place des Vosges, 75004 Paris"
+ },
+ "osmaddr:17 rue du Faubourg Montmartre, 75009 Paris": {
+  "lat": 48.8726012,
+  "lng": 2.3430028,
+  "postcode": "75009",
+  "city": "Paris",
+  "label": "17 Rue du Faubourg Montmartre, 75009 Paris"
+ },
+ "osmaddr:16-18 rue Gaillon, 75002 Paris": {
+  "lat": 48.8681783,
+  "lng": 2.3339894,
+  "postcode": "75002",
+  "city": "Paris",
+  "label": "Rue Gaillon, 75002 Paris"
+ },
+ "osmaddr:13 rue du Bac, 75007 Paris": {
+  "lat": 48.8586229,
+  "lng": 2.3287266,
+  "postcode": "75007",
+  "city": "Paris",
+  "label": "13 Rue du Bac, 75007 Paris"
+ },
+ "osmaddr:Corredera Baja de San Pablo 51, Madrid": {
+  "lat": 40.4235093,
+  "lng": -3.702627,
+  "postcode": "28004",
+  "city": "Madrid",
+  "label": "51 Corredera Baja de San Pablo, 28004 Madrid"
+ },
+ "osmaddr:25 rue du Dragon, 75006 Paris": {
+  "lat": 48.8528354,
+  "lng": 2.3305112,
+  "postcode": "75006",
+  "city": "Paris",
+  "label": "25 Rue du Dragon, 75006 Paris"
+ },
+ "osm:Bancone, Covent Garden, London": {
+  "lat": 51.509547,
+  "lng": -0.1264122,
+  "postcode": "WC2N 4DD",
+  "city": "City of Westminster",
+  "label": "39 William IV Street, WC2N 4DD City of Westminster"
+ },
+ "osm:Petit Bao, Ternes, Paris 17e": null,
+ "osmaddr:Ternes, Paris 17e": {
+  "lat": 48.8783132,
+  "lng": 2.2990737,
+  "postcode": "75008",
+  "city": "Paris",
+  "label": "Boulevard de Courcelles, 75008 Paris"
+ },
+ "osmaddr:29 rue du Dragon, 75006 Paris": {
+  "lat": 48.8527066,
+  "lng": 2.3304063,
+  "postcode": "75006",
+  "city": "Paris",
+  "label": "29 Rue du Dragon, 75006 Paris"
+ },
+ "osm:Fellows, Paris 10e": {
+  "lat": 48.8738132,
+  "lng": 2.3551646,
+  "postcode": "75010",
+  "city": "Paris",
+  "label": "Passage du Désir, 75010 Paris"
+ },
+ "osmaddr:Rue du Faubourg Poissonnière, Paris 9e": {
+  "lat": 48.8749089,
+  "lng": 2.3480634,
+  "postcode": "75009",
+  "city": "Paris",
+  "label": "Rue du Faubourg Poissonnière, 75009 Paris"
+ },
+ "osmaddr:Rue Cler, Paris 7e": {
+  "lat": 48.8565839,
+  "lng": 2.3065089,
+  "postcode": "75007",
+  "city": "Paris",
+  "label": "Rue Cler, 75007 Paris"
+ },
+ "osm:Bocado, Madrid": {
+  "lat": 40.4262381,
+  "lng": -3.6962852,
+  "postcode": "28004",
+  "city": "Madrid",
+  "label": "1 Calle de Santa Teresa, 28004 Madrid"
+ },
+ "osm:Café Nuances, Paris 4e": {
+  "lat": 48.8588902,
+  "lng": 2.3582411,
+  "postcode": "75004",
+  "city": "Paris",
+  "label": "Rue de l'Abbé Migne, 75004 Paris"
+ },
+ "osm:L’Affable, Paris 7e": null,
+ "osmaddr:Paris 7e": {
+  "lat": 48.8564911,
+  "lng": 2.3128,
+  "postcode": "75007",
+  "city": "Paris",
+  "label": "75007 Paris"
+ },
+ "osm:Ishtar, Marylebone, London": {
+  "lat": 51.5201135,
+  "lng": -0.158209,
+  "postcode": "W1U 6AZ",
+  "city": "City of Westminster",
+  "label": "10-12 Crawford Street, W1U 6AZ City of Westminster"
+ },
+ "osm:Katsu, Malasaña, Madrid": {
+  "lat": 40.4224624,
+  "lng": -3.7061785,
+  "postcode": "28004",
+  "city": "Madrid",
+  "label": "22 Calle de la Luna, 28004 Madrid"
+ },
+ "osm:Avobar, Marylebone, London": {
+  "lat": 51.5195527,
+  "lng": -0.1550259,
+  "postcode": "W1U 7RB",
+  "city": "City of Westminster",
+  "label": "60 Chiltern Street, W1U 7RB City of Westminster"
+ },
+ "osm:La Alquimia, Salamanca, Madrid": null,
+ "osmaddr:Salamanca, Madrid": {
+  "lat": 40.4270451,
+  "lng": -3.6806024,
+  "postcode": null,
+  "city": "Madrid",
+  "label": "Madrid"
+ },
+ "osm:Granger & Co., Chelsea, London": {
+  "lat": 51.4938132,
+  "lng": -0.1587725,
+  "postcode": "SW1X 0BP",
+  "city": "Greater London",
+  "label": "237 Pavilion Road, SW1X 0BP Greater London"
+ },
+ "osm:Mercato Mayfair, Mayfair, London": {
+  "lat": 51.5130789,
+  "lng": -0.1532466,
+  "postcode": "W1K 6ZA",
+  "city": "City of Westminster",
+  "label": "13 North Audley Street, W1K 6ZA City of Westminster"
+ },
+ "osm:The Monocle Café, Marylebone, London": {
+  "lat": 51.5188135,
+  "lng": -0.1546429,
+  "postcode": "W1U 7QA",
+  "city": "City of Westminster",
+  "label": "18 Chiltern Street, W1U 7QA City of Westminster"
+ },
+ "osm:Padella, Shoreditch, London": {
+  "lat": 51.5233156,
+  "lng": -0.0819958,
+  "postcode": "EC2A 4JA",
+  "city": "Greater London",
+  "label": "New North Place, EC2A 4JA Greater London"
+ },
+ "osm:Blank Street, London": {
+  "lat": 51.5050764,
+  "lng": -0.0192493,
+  "postcode": "E14 5AH",
+  "city": "Greater London",
+  "label": "1 Canada Square, E14 5AH Greater London"
+ },
+ "osmaddr:Avenue Ledru-Rollin, Paris 11e": {
+  "lat": 48.8561661,
+  "lng": 2.3789596,
+  "postcode": "75011",
+  "city": "Paris",
+  "label": "Avenue Ledru-Rollin, 75011 Paris"
+ },
+ "osm:Bonnie, Tour Morland (SO/ Paris), Paris 4e": null,
+ "osmaddr:Tour Morland (SO/ Paris), Paris 4e": null,
+ "osmaddr:Rue Marbeuf, Paris 8e": {
+  "lat": 48.8669814,
+  "lng": 2.3016145,
+  "postcode": "75008",
+  "city": "Paris",
+  "label": "Rue Marbeuf, 75008 Paris"
+ },
+ "osm:Onoé, Salamanca, Madrid": null,
+ "osm:Marcel, Paris 7e": {
+  "lat": 48.8516279,
+  "lng": 2.3231241,
+  "postcode": "75007",
+  "city": "Paris",
+  "label": "Rue de Babylone, 75007 Paris"
+ },
+ "osm:Brach, Paris 16e": {
+  "lat": 48.8612855,
+  "lng": 2.2747953,
+  "postcode": "75116",
+  "city": "Paris",
+  "label": "Rue Jean Richepin, 75116 Paris"
+ },
+ "osm:Jenki, Covent Garden, London": null,
+ "osmaddr:Covent Garden, London": {
+  "lat": 51.5128732,
+  "lng": -0.1225639,
+  "postcode": "WC2E 9DD",
+  "city": "City of Westminster",
+  "label": "Bow Street, WC2E 9DD City of Westminster"
+ },
+ "osm:Paper Moon, The OWO (Old War Office), London": null,
+ "osmaddr:The OWO (Old War Office), London": null,
+ "osm:It’s Bagels, Primrose Hill, London": {
+  "lat": 51.540986,
+  "lng": -0.1575498,
+  "postcode": "NW1 8XD",
+  "city": "Greater London",
+  "label": "65 Regent's Park Road, NW1 8XD Greater London"
+ },
+ "osm:Miznon, Paris 4e": {
+  "lat": 48.8571533,
+  "lng": 2.3589476,
+  "postcode": "75004",
+  "city": "Paris",
+  "label": "Rue des Écouffes, 75004 Paris"
+ },
+ "osm:Corner Shop, Temple, London": null,
+ "osmaddr:Temple, London": {
+  "lat": 51.5109659,
+  "lng": -0.1143345,
+  "postcode": "WC2R 2NF",
+  "city": "City of Westminster",
+  "label": "Temple Place, WC2R 2NF City of Westminster"
+ },
+ "osm:La Única, Salamanca, Madrid": null,
+ "osm:Spitalfields Market, Shoreditch, London": null,
+ "osmaddr:Shoreditch, London": {
+  "lat": 51.5266694,
+  "lng": -0.0798926,
+  "postcode": "EC2A 3AR",
+  "city": "Greater London",
+  "label": "EC2A 3AR Greater London"
+ },
+ "osm:Zahter, Soho, London": {
+  "lat": 51.5138065,
+  "lng": -0.1387571,
+  "postcode": "W1F 7PS",
+  "city": "City of Westminster",
+  "label": "30 - 32 Foubert's Place, W1F 7PS City of Westminster"
+ },
+ "osm:Tease, South Kensington, London": null,
+ "osmaddr:South Kensington, London": {
+  "lat": 51.4955817,
+  "lng": -0.1831368,
+  "postcode": "SW7 4SD",
+  "city": "Greater London",
+  "label": "SW7 4SD Greater London"
+ },
+ "osm:74 Duke, Mayfair, London": {
+  "lat": 51.5134103,
+  "lng": -0.1511296,
+  "postcode": "W1K 6JZ",
+  "city": "City of Westminster",
+  "label": "74 Duke Street, W1K 6JZ City of Westminster"
+ },
+ "osm:Saddle, Knightsbridge, London": null,
+ "osmaddr:Knightsbridge, London": {
+  "lat": 51.5008444,
+  "lng": -0.166965,
+  "postcode": "SW7 1BS",
+  "city": "City of Westminster",
+  "label": "SW7 1BS City of Westminster"
+ },
+ "osm:Ten con Ten, Salamanca, Madrid": {
+  "lat": 40.4278553,
+  "lng": -3.6884987,
+  "postcode": "28001",
+  "city": "Madrid",
+  "label": "6 Calle de Ayala, 28001 Madrid"
+ },
+ "osm:Sala de Despieces, Madrid": null,
+ "osmaddr:Madrid": {
+  "lat": 40.416782,
+  "lng": -3.703507,
+  "postcode": null,
+  "city": "Madrid",
+  "label": "Madrid"
+ }
+}

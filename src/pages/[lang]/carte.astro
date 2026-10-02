@@ -1,0 +1,129 @@
+---
+import Base from '../../layouts/Base.astro';
+import MapView from '../../components/MapView.astro';
+import { t, langPaths, type Lang } from '../../lib/i18n';
+import { mapPoints, cityGroups, HAS_RATINGS, FAMILIES } from '../../lib/restaurants';
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const points = mapPoints(lang);
+const cities = cityGroups();
+// Familles de cuisine présentes sur la carte, avec leur nombre (« Autres » en dernier).
+const families = [...FAMILIES, { id: 'autres', emoji: '🍴', fr: 'Autres', en: 'Other' }]
+  .map((f) => ({ ...f, count: points.filter((p) => p.family === f.id).length }))
+  .filter((f) => f.count > 0);
+const legend = [
+  { c: '#F0D58C', l: '4,5 – 5' },
+  { c: '#A9D3B4', l: '4' },
+  { c: '#F2B98C', l: '3 – 3,5' },
+  { c: '#E5938C', l: '< 3' },
+];
+---
+<Base lang={lang} title={t(lang, 'map.title')} fullBleed>
+  <div class="map-page">
+    <div class="overlay">
+      <h1>{t(lang, 'map.title')}</h1>
+      <p>{points.length} 📍 · {t(lang, 'map.subtitle')}</p>
+      {HAS_RATINGS && (
+        <ul class="legend" aria-label={t(lang, 'map.legend')}>
+          {legend.map((x) => <li><i style={`background:${x.c}`}></i>{x.l}</li>)}
+        </ul>
+      )}
+      <div class="view" role="group" aria-label={t(lang, 'map.view')}>
+        <button type="button" data-mode="photo" class="on">📷 {t(lang, 'map.photos')}</button>
+        <button type="button" data-mode="label">🏷️ {t(lang, 'map.labels')}</button>
+      </div>
+      <div class="families" aria-label={t(lang, 'map.filter')}>
+        {families.map((f) => <button type="button" data-family={f.id}>{f.emoji} {f[lang]} <small>{f.count}</small></button>)}
+      </div>
+      {cities.length > 1 && (
+        <div class="cities" aria-label={t(lang, 'map.cities')}>
+          {cities.map((c) => <button type="button" data-bounds={JSON.stringify(c.bounds)}>{c.city} <small>{c.count}</small></button>)}
+        </div>
+      )}
+    </div>
+    <MapView points={points} lang={lang} height="100%" zoom={13} center={[48.873, 2.3522]} />
+  </div>
+</Base>
+
+<style>
+  .map-page { position: relative; height: calc(100dvh - 64px); }
+  :global(body:has(.demo-banner)) .map-page { height: calc(100dvh - 64px - 31px); }
+  .map-page :global(.map) { border: 0; border-radius: 0; }
+  .overlay {
+    position: absolute; z-index: 600; left: 16px; top: 16px; max-width: calc(100% - 80px);
+    background: rgba(2, 35, 125, .94); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; border-radius: var(--radius); padding: 16px 20px;
+    box-shadow: var(--shadow-lg);
+  }
+  h1 { font-size: 1.8rem; }
+  p { margin: 4px 0 10px; font-size: .9rem; }
+  .legend { list-style: none; margin: 0; padding: 0; display: flex; gap: 10px; flex-wrap: wrap; font-size: .75rem; font-weight: 700; }
+  .legend li { display: flex; align-items: center; gap: 5px; }
+  .legend i { width: 12px; height: 12px; border-radius: 50%; }
+  .cities { display: flex; gap: 6px; margin-top: 8px; overflow-x: auto; scrollbar-width: none; }
+  .cities::-webkit-scrollbar { display: none; }
+  .cities button { flex-shrink: 0; }
+  @media (max-width: 640px) {
+    .overlay { left: 10px; right: 10px; top: 10px; max-width: none; padding: 12px 14px; }
+    h1 { font-size: 1.4rem; }
+    p { display: none; }
+  }
+  .cities button {
+    font: inherit; font-size: .8rem; font-weight: 600; color: #fff; background: rgba(255,255,255,.08); cursor: pointer;
+    border: 1px solid rgba(255,255,255,.25); border-radius: 999px; padding: 4px 11px; transition: background-color .2s, color .2s;
+  }
+  .cities button:hover { background: rgba(255,255,255,.18); }
+  .cities button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .cities small, .families small { opacity: .6; font-weight: 600; }
+  .view { display: inline-flex; margin-top: 4px; padding: 3px; gap: 2px; border-radius: 999px; background: rgba(255,255,255,.1); }
+  .view button {
+    font: inherit; font-size: .8rem; font-weight: 700; color: #fff; background: transparent; border: 0; cursor: pointer;
+    border-radius: 999px; padding: 5px 12px;
+  }
+  .view button.on { background: #fff; color: var(--blue); }
+  .families { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; }
+  .families::-webkit-scrollbar { display: none; }
+  .families button {
+    flex-shrink: 0; font: inherit; font-size: .8rem; font-weight: 600; color: var(--blue); background: #fff; cursor: pointer;
+    border: 1px solid #fff; border-radius: 999px; padding: 4px 11px; transition: background-color .2s, color .2s;
+  }
+  .families button:hover { background: var(--blue-soft); }
+  .families button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+</style>
+
+<script>
+  const mapEl = document.querySelector<HTMLElement>('.map-page [data-map]');
+
+  // Photos ou noms sur les épingles.
+  const views = document.querySelectorAll<HTMLButtonElement>('.view button');
+  views.forEach((b) => b.addEventListener('click', () => {
+    views.forEach((x) => x.classList.toggle('on', x === b));
+    if (mapEl) mapEl.dataset.mode = b.dataset.mode;
+  }));
+
+  // Filtre par type de cuisine : un clic sur le bouton actif réaffiche tout.
+  const fams = document.querySelectorAll<HTMLButtonElement>('.families button');
+  fams.forEach((b) => b.addEventListener('click', () => {
+    const active = !b.classList.contains('on');
+    fams.forEach((x) => x.classList.toggle('on', active && x === b));
+    if (!mapEl) return;
+    mapEl.dataset.family = active ? b.dataset.family : '';
+    mapEl.dispatchEvent(new CustomEvent('map:filter', { detail: active ? b.dataset.family : null }));
+  }));
+
+  // Lien partageable : ?vue=noms&type=italien
+  const params = new URLSearchParams(location.search);
+  if (params.get('vue') === 'noms') document.querySelector<HTMLButtonElement>('.view [data-mode="label"]')?.click();
+  const fam = params.get('type');
+  if (fam) document.querySelector<HTMLButtonElement>(`.families [data-family="${CSS.escape(fam)}"]`)?.click();
+
+  // Les boutons de ville recadrent la carte (écouté par MapView via l'événement « map:fit »).
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.cities button');
+  buttons.forEach((b) => b.addEventListener('click', () => {
+    buttons.forEach((x) => x.classList.toggle('on', x === b));
+    document.querySelector('.map-page [data-map]')?.dispatchEvent(new CustomEvent('map:fit', { detail: JSON.parse(b.dataset.bounds!) }));
+  }));
+</script>
+<style is:global>
+  .map-page .leaflet-top.leaflet-left { top: auto; bottom: 24px; }
+</style>

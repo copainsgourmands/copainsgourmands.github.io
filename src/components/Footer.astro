@@ -1,0 +1,23 @@
+---
+import { t, type Lang } from '../lib/i18n';
+import { SITE } from '../lib/site';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+---
+<footer>
+  <div class="wrap foot">
+    <div>
+      <p class="big">{SITE.name}</p>
+      <p>{t(lang, 'footer.made')}</p>
+    </div>
+    <a class="btn btn-accent" href={SITE.instagram} target="_blank" rel="noopener">📸 {t(lang, 'footer.follow')} · @{SITE.handle}</a>
+  </div>
+</footer>
+
+<style>
+  footer { background: var(--blue-deep); color: #fff; padding: 48px 0; margin-top: 40px; }
+  .foot { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .big { font-family: var(--font-display); font-weight: 800; font-size: 1.8rem; margin: 0 0 4px; color: #fff; }
+  p { margin: 0; color: rgba(255,255,255,.65); }
+  .btn:hover { box-shadow: 0 12px 28px -12px rgba(0,0,0,.5); }
+</style>

@@ -1,0 +1,17 @@
+{
+  "name": "food-site",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "import": "/opt/anaconda3/bin/python3 scripts/import_instagram.py"
+  },
+  "dependencies": {
+    "astro": "^7.3.5",
+    "leaflet": "^1.9.4",
+    "leaflet.markercluster": "^1.5.3"
+  }
+}

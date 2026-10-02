@@ -1,0 +1,60 @@
+---
+import StarRating from './StarRating.astro';
+import { areaLabel, areaKey, ratingColor, formatRating, thumb, type Restaurant } from '../lib/restaurants';
+import { url, type Lang } from '../lib/i18n';
+interface Props { r: Restaurant; lang: Lang; rank?: number }
+const { r, lang, rank } = Astro.props;
+const searchText = [r.name, r.cuisine, r.review, r.address, areaLabel(r, lang)].join(' ').toLowerCase();
+---
+<a
+  class="card"
+  href={url(`${lang}/resto/${r.slug}/`)}
+  data-search={searchText}
+  data-rating={r.rating ?? 0}
+  data-area={areaKey(r)}
+  data-cuisine={r.cuisine ?? ''}
+  data-price={r.price ?? ''}
+  data-date={r.date}
+  data-name={r.name.toLowerCase()}
+>
+  <div class="photo">
+    <img src={url(thumb(r.photos[0]))} alt={r.name} loading="lazy" width="600" height="600" />
+    {r.rating != null && <span class="badge" style={`background:${ratingColor(r.rating)}`}>{formatRating(r.rating, lang)}★</span>}
+    {rank && <span class="rank">#{rank}</span>}
+  </div>
+  <div class="body">
+    <h3>{r.name}</h3>
+    <p class="meta">{areaLabel(r, lang)}{r.cuisine && ` · ${r.cuisine}`}{r.price && ` · ${r.price}`}</p>
+    {r.rating != null && <StarRating rating={r.rating} lang={lang} />}
+  </div>
+</a>
+
+<style>
+  .card {
+    display: flex; flex-direction: column; text-decoration: none; background: var(--paper);
+    background: #fff; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+  /* Masquée par les filtres du catalogue (sinon le display: flex ci-dessus l'emporte). */
+  .card[hidden] { display: none; }
+  .photo { position: relative; aspect-ratio: 1; overflow: hidden; }
+  .photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; }
+  .card:hover .photo img { transform: scale(1.05); }
+  .badge {
+    position: absolute; top: 10px; right: 10px; font-family: var(--font-display); font-weight: 800;
+    font-size: .95rem; padding: 4px 10px; border-radius: 999px; color: var(--ink);
+  }
+  .rank {
+    position: absolute; top: 10px; left: 10px; background: var(--blue); color: #fff; font-family: var(--font-display);
+    font-weight: 800; padding: 4px 10px; border-radius: 999px;
+  }
+  .body { padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 4px; }
+  .meta { margin: 0; color: var(--ink-soft); font-size: .85rem; }
+  @media (max-width: 560px) {
+    .body { padding: 10px 10px 12px; }
+    h3 { font-size: 1rem; }
+    .meta { font-size: .75rem; }
+    .badge { font-size: .8rem; padding: 2px 8px; }
+  }
+</style>

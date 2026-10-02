@@ -1,0 +1,129 @@
+---
+import Base from '../../layouts/Base.astro';
+import RestaurantCard from '../../components/RestaurantCard.astro';
+import MapView from '../../components/MapView.astro';
+import { t, url, langPaths, type Lang } from '../../lib/i18n';
+import { restaurants, stats, mapPoints, formatRating, thumb, areaLabel, HAS_RATINGS } from '../../lib/restaurants';
+import { SITE } from '../../lib/site';
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const s = stats();
+const latest = restaurants.slice(0, 6);
+const top = [...restaurants].filter((r) => r.rating != null).sort((a, b) => (b.rating! - a.rating!) || b.date.localeCompare(a.date)).slice(0, 5);
+const collage = restaurants.slice(0, 4);
+---
+<Base lang={lang}>
+  <section class="hero">
+    <div class="wrap hero-inner">
+      <div class="hero-text">
+        <span class="sticker">@{SITE.handle}</span>
+        <p class="kicker">{t(lang, 'hero.kicker')}</p>
+        <h1>{t(lang, 'hero.title')}</h1>
+        <div class="ctas">
+          <a class="btn btn-accent" href={url(`${lang}/catalogue/`)}>{t(lang, 'hero.cta.catalogue')} →</a>
+          <a class="btn" href={url(`${lang}/carte/`)}>📍 {t(lang, 'hero.cta.map')}</a>
+        </div>
+      </div>
+      <div class="collage" aria-hidden="true">
+        {collage.map((r, i) => <img class={`c${i}`} src={url(thumb(r.photos[0]))} alt="" />)}
+      </div>
+    </div>
+    <div class="wrap">
+      <dl class="stats">
+        <div><dt>{t(lang, 'stats.restos')}</dt><dd>{s.count}</dd></div>
+        <div><dt>{t(lang, 'stats.areas')}</dt><dd>{s.areas}</dd></div>
+        {HAS_RATINGS
+          ? <div><dt>{t(lang, 'stats.avg')}</dt><dd>{formatRating(Math.round(s.avg * 10) / 10, lang)}<small>/5</small></dd></div>
+          : <div><dt>{t(lang, 'stats.cities')}</dt><dd>{s.cities}</dd></div>}
+      </dl>
+    </div>
+  </section>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="track" style={`--marquee-duration:${restaurants.length * 4}s`}>
+      {[0, 1].map(() => <span>{restaurants.map((r) => (r.rating != null ? `${r.name} ★ ${formatRating(r.rating, lang)} · ` : `${r.name} ✦ ${areaLabel(r, lang)} · `)).join('')}</span>)}
+    </div>
+  </div>
+
+  <section class="section wrap">
+    <div class="section-head">
+      <h2>{t(lang, 'home.latest')}</h2>
+      <a class="link-arrow" href={url(`${lang}/catalogue/`)}>{t(lang, 'home.seeAll')} →</a>
+    </div>
+    <div class="grid">{latest.map((r) => <RestaurantCard r={r} lang={lang} />)}</div>
+  </section>
+
+  {top.length > 0 && <section class="section top">
+    <div class="wrap">
+      <div class="section-head"><h2>{t(lang, 'home.top')} 🏆</h2></div>
+      <ol class="top-list">
+        {top.map((r, i) => (
+          <li>
+            <a href={url(`${lang}/resto/${r.slug}/`)}>
+              <span class="pos">{i + 1}</span>
+              <img src={url(thumb(r.photos[0]))} alt="" />
+              <span class="name">{r.name}<small>{r.cuisine}</small></span>
+              <span class="score">{formatRating(r.rating, lang)}★</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>}
+
+  <section class="section wrap">
+    <div class="section-head">
+      <h2>{t(lang, 'home.map')}</h2>
+      <a class="link-arrow" href={url(`${lang}/carte/`)}>{t(lang, 'home.mapCta')} →</a>
+    </div>
+    <MapView points={mapPoints(lang)} lang={lang} height="420px" />
+  </section>
+</Base>
+
+<style>
+  .hero { background: radial-gradient(120% 90% at 85% 10%, #14389a 0%, var(--blue) 55%, var(--blue-deep) 100%); color: #fff; padding: 56px 0 48px; overflow: hidden; }
+  .hero-inner { display: grid; gap: 40px; align-items: center; }
+  @media (min-width: 900px) { .hero-inner { grid-template-columns: 1.25fr 1fr; } }
+  .kicker { font-weight: 700; text-transform: uppercase; letter-spacing: .16em; font-size: .8rem; color: var(--accent-soft); opacity: .85; margin: 22px 0 10px; }
+  h1 { max-width: 12ch; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+  .ctas .btn:not(.btn-accent) { background: transparent; color: #fff; border-color: rgba(255,255,255,.4); }
+  .ctas .btn:not(.btn-accent):hover { background: rgba(255,255,255,.1); border-color: #fff; }
+  .collage { position: relative; height: 340px; }
+  .collage img { position: absolute; width: 52%; aspect-ratio: 1; object-fit: cover; border: 5px solid var(--paper); border-radius: 18px; box-shadow: 0 24px 40px -18px rgba(0, 0, 0, .55); transition: transform .3s; }
+  .collage img:hover { transform: scale(1.04) rotate(0deg) !important; z-index: 5; }
+  .c0 { left: 0; top: 0; transform: rotate(-6deg); }
+  .c1 { right: 0; top: 10px; transform: rotate(5deg); }
+  .c2 { left: 14%; bottom: 0; transform: rotate(4deg); }
+  .c3 { right: 6%; bottom: 14px; transform: rotate(-4deg); width: 40% !important; }
+  @media (max-width: 899px) { .collage { height: 260px; max-width: 420px; } }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 44px 0 0; }
+  .stats div { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: var(--radius-sm); padding: 16px 18px; }
+  .stats dt { font-size: .8rem; opacity: .7; order: 2; letter-spacing: .02em; }
+  .stats div { display: flex; flex-direction: column-reverse; }
+  .stats dd { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(1.8rem, 6vw, 3rem); color: #fff; line-height: 1; }
+  .stats small { font-size: .5em; opacity: .7; }
+
+  .marquee { background: var(--accent); color: #fff; overflow: hidden; white-space: nowrap; padding: 13px 0; font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; letter-spacing: .01em; }
+  .track { display: inline-flex; animation: slide var(--marquee-duration, 120s) linear infinite; }
+  .track span { padding-right: 8px; }
+  @keyframes slide { to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .track { animation: none; } }
+
+  .top { background: var(--paper-2); }
+  .top-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .top-list a { display: grid; grid-template-columns: auto 64px 1fr auto; align-items: center; gap: 16px; text-decoration: none; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 18px 10px 10px; transition: transform .2s, box-shadow .2s; }
+  .top-list a:hover { transform: translateX(4px); box-shadow: var(--shadow); }
+  .pos { font-family: var(--font-display); font-weight: 800; font-size: 1.8rem; color: var(--blue); width: 1.4em; text-align: center; }
+  .top-list img { width: 64px; height: 64px; object-fit: cover; border-radius: 12px; }
+  .name { font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; display: flex; flex-direction: column; }
+  .name small { font-family: var(--font-body); font-weight: 500; font-size: .8rem; color: var(--ink-soft); }
+  .score { background: var(--accent); color: #fff; border-radius: 999px; padding: 4px 12px; font-family: var(--font-display); font-weight: 800; }
+  @media (max-width: 560px) {
+    .top-list a { gap: 10px; padding-right: 10px; grid-template-columns: auto 48px 1fr auto; }
+    .top-list img { width: 48px; height: 48px; }
+    .name { font-size: 1rem; }
+    .pos { font-size: 1.3rem; }
+  }
+</style>

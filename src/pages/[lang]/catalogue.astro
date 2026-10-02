@@ -1,0 +1,161 @@
+---
+import Base from '../../layouts/Base.astro';
+import RestaurantCard from '../../components/RestaurantCard.astro';
+import { t, langPaths, type Lang } from '../../lib/i18n';
+import { restaurants, areaKey, areaLabel, HAS_RATINGS } from '../../lib/restaurants';
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+
+const areas = [...new Map(restaurants.map((r) => [areaKey(r), areaLabel(r, lang)])).entries()].sort(([a], [b]) => a.localeCompare(b));
+const cuisines = [...new Set(restaurants.map((r) => r.cuisine).filter(Boolean))].sort() as string[];
+const prices = ['€', '€€', '€€€', '€€€€'].filter((p) => restaurants.some((r) => r.price === p));
+const all = t(lang, 'filters.all');
+---
+<Base lang={lang} title={t(lang, 'catalogue.title')}>
+  <section class="head">
+    <div class="wrap">
+      <h1>{t(lang, 'catalogue.title')}</h1>
+      <p>{t(lang, 'catalogue.subtitle')}</p>
+    </div>
+  </section>
+
+  <div class="filters-bar">
+    <form class="wrap filters" id="filters" role="search" onsubmit="return false">
+      <label class="search">
+        <span class="sr-only">{t(lang, 'filters.search')}</span>
+        <input type="search" name="q" placeholder={t(lang, 'filters.search')} autocomplete="off" />
+      </label>
+      <div class="selects">
+        {HAS_RATINGS && (
+          <label><span>{t(lang, 'filters.rating')}</span>
+            <select name="rating">
+              <option value="0">{all}</option>
+              <option value="3">3★ +</option>
+              <option value="4">4★ +</option>
+              <option value="4.5">4,5★ +</option>
+            </select>
+          </label>
+        )}
+        <label><span>{t(lang, 'filters.area')}</span>
+          <select name="area">
+            <option value="">{all}</option>
+            {areas.map(([k, l]) => <option value={k}>{l}</option>)}
+          </select>
+        </label>
+        <label><span>{t(lang, 'filters.cuisine')}</span>
+          <select name="cuisine">
+            <option value="">{all}</option>
+            {cuisines.map((c) => <option value={c}>{c}</option>)}
+          </select>
+        </label>
+        <label><span>{t(lang, 'filters.price')}</span>
+          <select name="price">
+            <option value="">{all}</option>
+            {prices.map((p) => <option value={p}>{p}</option>)}
+          </select>
+        </label>
+        <label><span>{t(lang, 'filters.sort')}</span>
+          <select name="sort">
+            <option value="date">{t(lang, 'sort.date')}</option>
+            {HAS_RATINGS && <option value="rating">{t(lang, 'sort.rating')}</option>}
+            <option value="name">{t(lang, 'sort.name')}</option>
+          </select>
+        </label>
+      </div>
+    </form>
+  </div>
+
+  <section class="wrap results">
+    <p class="count" aria-live="polite"><strong id="count">{restaurants.length}</strong> {t(lang, 'filters.results')}</p>
+    <div class="grid" id="grid">
+      {restaurants.map((r) => <RestaurantCard r={r} lang={lang} />)}
+    </div>
+    <div class="empty" id="empty" hidden>
+      <p>🫠 {t(lang, 'filters.empty')}</p>
+      <button class="btn btn-accent" type="button" id="reset">{t(lang, 'filters.reset')}</button>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const form = document.getElementById('filters') as HTMLFormElement;
+  const grid = document.getElementById('grid')!;
+  const count = document.getElementById('count')!;
+  const empty = document.getElementById('empty')!;
+  const cards = [...grid.querySelectorAll<HTMLElement>('.card')];
+  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+  // Les filtres vivent dans l'URL : un lien partagé garde la recherche.
+  const params = new URLSearchParams(location.search);
+  for (const [k, v] of params) {
+    const el = form.elements.namedItem(k) as HTMLInputElement | null;
+    if (el) el.value = v;
+  }
+
+  function apply() {
+    const f = new FormData(form);
+    const q = norm(String(f.get('q') || '').trim());
+    const minRating = Number(f.get('rating') || 0);
+    const area = String(f.get('area') || '');
+    const cuisine = String(f.get('cuisine') || '');
+    const price = String(f.get('price') || '');
+    const sort = String(f.get('sort') || 'date');
+
+    let shown = 0;
+    for (const c of cards) {
+      const d = c.dataset;
+      const ok =
+        (!q || norm(d.search!).includes(q)) &&
+        Number(d.rating) >= minRating &&
+        (!area || d.area === area) &&
+        (!cuisine || d.cuisine === cuisine) &&
+        (!price || d.price === price);
+      c.hidden = !ok;
+      if (ok) shown++;
+    }
+    const sorted = [...cards].sort((a, b) => {
+      if (sort === 'rating') return Number(b.dataset.rating) - Number(a.dataset.rating) || b.dataset.date!.localeCompare(a.dataset.date!);
+      if (sort === 'name') return a.dataset.name!.localeCompare(b.dataset.name!);
+      return b.dataset.date!.localeCompare(a.dataset.date!);
+    });
+    grid.append(...sorted);
+    count.textContent = String(shown);
+    empty.hidden = shown > 0;
+
+    const next = new URLSearchParams();
+    for (const [k, v] of f) if (v && !(k === 'rating' && v === '0') && !(k === 'sort' && v === 'date')) next.set(k, String(v));
+    history.replaceState(null, '', next.size ? `?${next}` : location.pathname);
+  }
+
+  form.addEventListener('input', apply);
+  form.addEventListener('change', apply);
+  document.getElementById('reset')!.addEventListener('click', () => { form.reset(); apply(); });
+  apply();
+</script>
+
+<style>
+  .head { background: linear-gradient(160deg, var(--blue) 0%, var(--blue-deep) 100%); color: #fff; padding: 48px 0 40px; }
+  .head p { margin: 10px 0 0; font-size: 1.1rem; opacity: .75; }
+  .filters-bar { position: sticky; top: 64px; z-index: 500; background: rgba(251, 249, 244, .92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  .filters { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; padding-bottom: 12px; }
+  @media (min-width: 1000px) { .filters { flex-direction: row; align-items: end; } .search { flex: 1; } }
+  .search input {
+    width: 100%; font: inherit; padding: 12px 18px; border: 1px solid var(--line); border-radius: 999px; background: #fff;
+  }
+  .search input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
+  .selects { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+  .selects label { display: flex; flex-direction: column; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); gap: 2px; flex-shrink: 0; }
+  select {
+    font: inherit; font-size: .9rem; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--ink);
+    padding: 8px 30px 8px 14px; border: 1px solid var(--line); border-radius: 999px; background-color: #fff; cursor: pointer;
+    appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 55%, calc(100% - 11px) 55%; background-size: 5px 5px; background-repeat: no-repeat;
+  }
+  select:hover { border-color: var(--ink-soft); }
+  select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
+  .results { padding-top: 24px; padding-bottom: 40px; }
+  .count { margin: 0 0 16px; color: var(--ink-soft); }
+  .count strong { color: var(--blue); font-family: var(--font-display); font-size: 1.3rem; }
+  .empty { text-align: center; padding: 60px 0; font-size: 1.1rem; }
+</style>

@@ -1,0 +1,22 @@
+---
+import { formatRating, type Restaurant } from '../lib/restaurants';
+import type { Lang } from '../lib/i18n';
+interface Props { rating: Restaurant['rating']; lang: Lang; size?: 'sm' | 'lg' }
+const { rating, lang, size = 'sm' } = Astro.props;
+const pct = rating == null ? 0 : (rating / 5) * 100;
+---
+<span class:list={['stars', size]} aria-label={rating == null ? '–' : `${formatRating(rating, lang)} / 5`}>
+  <span class="track" aria-hidden="true">★★★★★<span class="fill" style={`width:${pct}%`}>★★★★★</span></span>
+  <span class="num">{formatRating(rating, lang)}<small>/5</small></span>
+</span>
+
+<style>
+  .stars { display: inline-flex; align-items: center; gap: 8px; }
+  .track { position: relative; color: var(--line); letter-spacing: 1px; line-height: 1; }
+  .fill { position: absolute; inset: 0; overflow: hidden; color: var(--blue); white-space: nowrap; }
+  .num { font-family: var(--font-display); font-weight: 800; }
+  .num small { font-weight: 600; opacity: .6; font-size: .75em; }
+  .sm .track { font-size: .9rem; }
+  .lg .track { font-size: 1.8rem; }
+  .lg .num { font-size: 2rem; }
+</style>
