@@ -76,12 +76,26 @@ Pour toute mise à jour : `npm run import`, puis `git add . && git commit -m "No
 
 Pour un nom de domaine perso (environ 10 €/an), va dans Settings → Pages → Custom domain.
 
+## 6. Mise à jour automatique à chaque nouveau post
+
+Le site est en ligne sur https://arnaudriche03-sys.github.io/copains-gourmands/.
+
+Un robot GitHub (`.github/workflows/instagram.yml`) regarde le compte Instagram **toutes les heures**. À chaque nouveau post, il prépare la fiche (photos, adresse, carte) et ouvre une **pull request « Nouveaux restos à valider »**. Tu reçois un e-mail de GitHub.
+- **Valider** : « Merge pull request ». Le site est à jour 2 minutes après.
+- **Corriger avant** : onglet « Files changed », puis `data/restaurants.csv`, puis « Edit file ».
+- **Refuser** : « Close pull request ». Ces posts ne seront plus proposés.
+
+Le robot a besoin d'une clé d'accès Instagram, enregistrée dans le secret `IG_TOKEN` (Settings → Secrets and variables → Actions). Le lundi, il renouvelle cette clé, valable 60 jours. Pour que ce renouvellement soit enregistré automatiquement, ajoute aussi un secret `GH_PAT` : un jeton GitHub limité à ce dépôt, avec la permission « Secrets : read and write ». Sans lui, il faudra recoller une nouvelle clé tous les 60 jours.
+
+Pour lancer le robot tout de suite : onglet Actions, puis « Nouveaux posts Instagram », puis « Run workflow ».
+
 ## Structure
 
 ```
 data/restaurants.csv     ← le tableau que tu édites
 data/restaurants.json    ← généré, lu par le site
 data/raw/                ← ton export Instagram (jamais publié)
+data/instagram_state.json ← date du dernier post traité par le robot
 scripts/import_instagram.py
 src/pages/[lang]/        ← accueil, catalogue, carte, fiche resto (FR + EN)
 src/i18n/fr.json, en.json ← textes de l'interface

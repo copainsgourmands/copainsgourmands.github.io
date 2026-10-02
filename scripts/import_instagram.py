@@ -3,6 +3,7 @@ Import de l'export Instagram → data/restaurants.csv (éditable dans Excel) →
 
 Usage :
     npm run import                 # lit le .zip ou le dossier présent dans data/raw/
+    npm run import -- --api        # lit les nouveaux posts via l'API Instagram (variable IG_TOKEN), utilisé par le robot GitHub
     npm run import -- --no-geo     # sans géocodage (hors ligne)
     npm run import -- --csv-only   # ne relit pas l'export : regénère juste le JSON depuis le CSV corrigé
 
@@ -23,6 +24,7 @@ import argparse
 import csv
 import html
 import json
+import os
 import re
 import sys
 import time
@@ -40,6 +42,8 @@ RAW = ROOT / "data" / "raw"
 CSV_PATH = ROOT / "data" / "restaurants.csv"
 JSON_PATH = ROOT / "data" / "restaurants.json"
 GEOCACHE_PATH = ROOT / "data" / "geocache.json"
+API_STATE_PATH = ROOT / "data" / "instagram_state.json"  # date du dernier post déjà traité
+API_CACHE = RAW / "api"  # photos téléchargées depuis l'API (jamais publiées telles quelles)
 PHOTOS_DIR = ROOT / "public" / "photos"
 
 COLUMNS = [
@@ -538,7 +542,7 @@ def merge_export(rows: dict[str, dict], posts: list[dict], export: Path) -> tupl
             "date": datetime.fromtimestamp(latest_post["ts"], timezone.utc).date().isoformat(),
             "avis": "\n\n".join(i["review"] for _, i in reversed(items) if i["review"]),
             "instagram_resto": pick("handle") or "",
-            "lien_instagram": "",
+            "lien_instagram": latest_post.get("permalink", ""),
             "photos": "",
             "adresse_geocodee": "",
             "sources_export": sources,
@@ -648,16 +652,113 @@ def write_json(rows: dict[str, dict]) -> int:
     return len(out)
 
 
+# ---------- API Instagram (robot GitHub) ----------
+
+def load_posts_api(token: str, ignore: set[str]) -> tuple[list[dict], list[dict]]:
+    """Tous les posts du compte via l'API Instagram. Renvoie (nouveaux posts, tous les posts).
+    Nouveau = publié après la date enregistrée dans data/instagram_state.json et pas refusé."""
+    state = json.loads(API_STATE_PATH.read_text()) if API_STATE_PATH.exists() else {}
+    since = state.get("last_timestamp", "")
+    fields = "id,caption,media_type,media_url,permalink,timestamp,children{id,media_type,media_url}"
+    url = "https://graph.instagram.com/me/media?" + urllib.parse.urlencode({"fields": fields, "limit": 50, "access_token": token})
+    items = []
+    while url:
+        data = http_json(url)
+        items += data.get("data", [])
+        url = data.get("paging", {}).get("next")
+    print(f"{len(items)} posts sur le compte (API).")
+
+    API_CACHE.mkdir(parents=True, exist_ok=True)
+    new = []
+    for it in items:
+        if it["timestamp"] <= since or it["id"] in ignore:
+            continue
+        media = it.get("children", {}).get("data") or [it]
+        images = []
+        for m in media:
+            if m.get("media_type") != "IMAGE" or not m.get("media_url"):
+                continue  # vidéos ignorées, comme pour l'export
+            dest = API_CACHE / f"{m['id']}.jpg"
+            if not dest.exists():
+                req = urllib.request.Request(m["media_url"], headers={"User-Agent": USER_AGENT})
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    dest.write_bytes(r.read())
+            images.append(dest)
+        if images:
+            new.append({"id": it["id"], "caption": it.get("caption") or "", "images": images, "exif_geo": None,
+                        "ts": datetime.strptime(it["timestamp"], "%Y-%m-%dT%H:%M:%S%z").timestamp(),
+                        "permalink": it.get("permalink", "")})
+    if items:
+        state["last_timestamp"] = max(state.get("last_timestamp", ""), max(it["timestamp"] for it in items))
+    API_STATE_PATH.write_text(json.dumps(state, indent=1) + "\n", encoding="utf-8")
+    return new, items
+
+
+def fill_links(rows: dict[str, dict], items: list[dict]) -> int:
+    """Remplit « lien_instagram » des restos déjà connus (l'export ne donne pas les liens des posts)."""
+    done = 0
+    for it in items:
+        if not it.get("permalink"):
+            continue
+        day = datetime.strptime(it["timestamp"], "%Y-%m-%dT%H:%M:%S%z").date()
+        slug = slugify(parse_caption(it.get("caption") or "")["name"] or "")
+        free = [r for r in rows.values() if not r["lien_instagram"] and r["date"]]
+        near = [r for r in free if abs((datetime.fromisoformat(r["date"]).date() - day).days) <= 1]
+        same_day = [r for r in free if r["date"] == day.isoformat()]
+        match = next((r for r in near if r["slug"] == slug), None) or (same_day[0] if len(same_day) == 1 else None)
+        if match:
+            match["lien_instagram"] = it["permalink"]
+            done += 1
+    return done
+
+
+def write_summary(path: str, rows: dict[str, dict], new_slugs: list[str], posts: list[dict], links: int):
+    """Texte de la demande de validation (pull request) ouverte par le robot."""
+    repo, branch = os.environ.get("GITHUB_REPOSITORY", ""), os.environ.get("ROBOT_BRANCH", "robot/nouveaux-posts")
+    lines = []
+    if new_slugs:
+        lines += [f"## {len(new_slugs)} nouveau(x) resto(s) à valider", ""]
+        for slug in new_slugs:
+            r = rows[slug]
+            img = f"https://raw.githubusercontent.com/{repo}/{branch}/public/photos/{slug}/0-thumb.webp"
+            facts = " · ".join(x for x in [r["ville"], r["cuisine"], r["prix"]] if x)
+            lines += [f"### {r['nom']}", "",
+                      f'<img src="{img}" width="160" align="right">' if r["photos"] else "",
+                      f"- **Où** : {r['adresse'] or '—'} {f'({facts})' if facts else ''}",
+                      f"- **Post** : {r['lien_instagram'] or '—'}",
+                      f"- **À vérifier** : {r['statut']}" if r["statut"] != "ok" else "- **À vérifier** : rien, tout a été trouvé",
+                      "", "> " + r["avis"][:300].replace("\n", "\n> "), "", '<br clear="right">', ""]
+    if links:
+        lines += [f"{links} lien(s) « Voir le post » ajouté(s) aux restos déjà publiés.", ""]
+    lines += ["---",
+              "**Valider** : bouton « Merge pull request » → le site est mis à jour 2 minutes après.  ",
+              "**Corriger avant** : onglet « Files changed » → `data/restaurants.csv` → « Edit file ».  ",
+              "**Refuser** : « Close pull request » → ces posts ne seront plus proposés.", "",
+              f"<!-- ids: {','.join(p['id'] for p in posts)} -->"]
+    Path(path).write_text("\n".join(lines), encoding="utf-8")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-geo", action="store_true", help="ne pas appeler les API de géocodage")
     ap.add_argument("--csv-only", action="store_true", help="ne pas relire l'export, juste CSV → JSON")
+    ap.add_argument("--api", action="store_true", help="nouveaux posts via l'API Instagram (variable IG_TOKEN)")
+    ap.add_argument("--ignore-ids", default="", help="posts refusés (identifiants séparés par des virgules)")
+    ap.add_argument("--summary", help="fichier où écrire le résumé des nouveautés (pour la pull request)")
     args = ap.parse_args()
 
     rows = read_csv()
     added = updated = 0
     posts = []
-    if not args.csv_only:
+    if args.api:
+        token = os.environ.get("IG_TOKEN") or sys.exit("Variable IG_TOKEN absente : clé d'accès Instagram manquante.")
+        posts, items = load_posts_api(token, set(filter(None, args.ignore_ids.split(","))))
+        before = set(rows)
+        added, updated = merge_export(rows, posts, API_CACHE)
+        sync_photos(rows, API_CACHE)
+        links = fill_links(rows, items)
+        new_slugs = [s for s in rows if s not in before]
+    elif not args.csv_only:
         export = find_export()
         posts = load_posts(export)
         added, updated = merge_export(rows, posts, export)
@@ -672,6 +773,8 @@ def main():
     refresh_status(rows)
     write_csv(rows)
     published = write_json(rows)
+    if args.api and args.summary and (new_slugs or links):
+        write_summary(args.summary, rows, new_slugs, posts, links)
 
     flagged = [r for r in rows.values() if r["statut"] != "ok"]
     print("\n── Rapport ──")

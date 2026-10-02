@@ -1,0 +1,90 @@
+name: Nouveaux posts Instagram
+
+# Toutes les heures : cherche les nouveaux posts du compte et propose les fiches à valider
+# (pull request « Nouveaux restos »). Le lundi, renouvelle aussi la clé Instagram (valable 60 jours).
+on:
+  schedule:
+    - cron: '17 * * * *'
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: instagram
+  cancel-in-progress: false
+
+env:
+  BRANCH: robot/nouveaux-posts
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clé Instagram présente ?
+        id: check
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+        run: |
+          if [ -z "$IG_TOKEN" ]; then
+            echo "::warning::Secret IG_TOKEN absent (Settings → Secrets → Actions) : rien à faire."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Renouveler la clé Instagram (le lundi)
+        if: steps.check.outputs.skip != 'true' && github.event.schedule == '0 5 * * 1'
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          NEW=$(curl -sf "https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=$IG_TOKEN" | jq -r .access_token)
+          if [ -z "$NEW" ] || [ "$NEW" = "null" ]; then echo "::error::Clé Instagram refusée : regénère-la et remplace le secret IG_TOKEN."; exit 1; fi
+          echo "::add-mask::$NEW"
+          if [ -n "$GH_PAT" ] && [ "$NEW" != "$IG_TOKEN" ]; then
+            GH_TOKEN="$GH_PAT" gh secret set IG_TOKEN --repo "$GITHUB_REPOSITORY" --body "$NEW"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.skip != 'true'
+
+      - uses: actions/setup-python@v5
+        if: steps.check.outputs.skip != 'true'
+        with:
+          python-version: '3.12'
+
+      - name: Importer les nouveaux posts
+        if: steps.check.outputs.skip != 'true'
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ROBOT_BRANCH: ${{ env.BRANCH }}
+        run: |
+          pip install --quiet pillow
+          # Posts refusés = ceux des pull requests fermées sans validation.
+          IGNORE=$(gh pr list --state closed --head "$BRANCH" --limit 100 --json body,mergedAt \
+            --jq '.[] | select(.mergedAt == null) | .body' | grep -o 'ids: [0-9,]*' | cut -d' ' -f2 | paste -sd, -)
+          python scripts/import_instagram.py --api --ignore-ids "$IGNORE" --summary "$RUNNER_TEMP/pr.md"
+
+      - name: Proposer les fiches à valider
+        if: steps.check.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -f "$RUNNER_TEMP/pr.md" ]; then echo "Aucun nouveau post."; exit 0; fi
+          git config user.name "copains-gourmands-robot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$BRANCH"
+          git add -A data public
+          git commit -q -m "Nouveaux posts Instagram"
+          # Déjà proposé à l'identique (pull request en attente) : rien à renvoyer.
+          if git fetch -q origin "$BRANCH" 2>/dev/null && git diff --quiet FETCH_HEAD HEAD -- data public; then
+            echo "Déjà proposé, en attente de validation."; exit 0
+          fi
+          git push -f origin "$BRANCH"
+          if [ "$(gh pr view "$BRANCH" --json state -q .state 2>/dev/null)" = "OPEN" ]; then
+            gh pr edit "$BRANCH" --body-file "$RUNNER_TEMP/pr.md"
+          else
+            gh pr create --head "$BRANCH" --base main --title "🍽️ Nouveaux restos à valider" --body-file "$RUNNER_TEMP/pr.md"
+          fi

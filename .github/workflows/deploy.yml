@@ -25,6 +25,11 @@ jobs:
           cache: npm
       - id: pages
         uses: actions/configure-pages@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # Le site est régénéré depuis le CSV : une correction faite directement sur GitHub est prise en compte.
+      - run: pip install --quiet pillow && python scripts/import_instagram.py --csv-only
       - run: npm ci
       - run: npm run build
         env:
