@@ -1,16 +1,23 @@
 name: Nouveaux posts Instagram
 
-# Toutes les heures : cherche les nouveaux posts du compte et propose les fiches à valider
+# Tous les jours : cherche les nouveaux posts du compte et propose les fiches à valider
 # (pull request « Nouveaux restos »). Le lundi, renouvelle aussi la clé Instagram (valable 60 jours).
+# Si la clé ne marche plus (ou ne peut pas être renouvelée), ouvre un ticket « Clé Instagram à renouveler »
+# assigné à la personne indiquée dans la variable ALERT_USER : GitHub le lui envoie par e-mail.
 on:
   schedule:
-    - cron: '17 * * * *'
-    - cron: '0 5 * * 1'
+    - cron: '0 18 * * *'  # 20h à Paris en été, 19h en hiver
   workflow_dispatch:
+    inputs:
+      test_alerte:
+        description: "Envoyer un ticket d'alerte de test (pour vérifier la réception de l'e-mail)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 concurrency:
   group: instagram
@@ -18,6 +25,7 @@ concurrency:
 
 env:
   BRANCH: robot/nouveaux-posts
+  LABEL: cle-instagram
 
 jobs:
   import:
@@ -29,33 +37,43 @@ jobs:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
         run: |
           if [ -z "$IG_TOKEN" ]; then
-            echo "::warning::Secret IG_TOKEN absent (Settings → Secrets → Actions) : rien à faire."
-            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::Secret IG_TOKEN absent (Settings → Secrets → Actions)."
+            echo "problem=absente" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Renouveler la clé Instagram (le lundi)
-        if: steps.check.outputs.skip != 'true' && github.event.schedule == '0 5 * * 1'
+        id: refresh
+        if: steps.check.outputs.problem == ''
         env:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          NEW=$(curl -sf "https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=$IG_TOKEN" | jq -r .access_token)
-          if [ -z "$NEW" ] || [ "$NEW" = "null" ]; then echo "::error::Clé Instagram refusée : regénère-la et remplace le secret IG_TOKEN."; exit 1; fi
+          [ "$(date -u +%u)" = 1 ] || exit 0
+          NEW=$(curl -s "https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=$IG_TOKEN" | jq -r '.access_token // empty' || true)
+          if [ -z "$NEW" ]; then
+            # Refus possible si la clé a moins de 24 h : la lecture des posts, juste après, dira si elle est vraiment morte.
+            echo "::warning::Renouvellement de la clé refusé cette semaine."; exit 0
+          fi
           echo "::add-mask::$NEW"
-          if [ -n "$GH_PAT" ] && [ "$NEW" != "$IG_TOKEN" ]; then
-            GH_TOKEN="$GH_PAT" gh secret set IG_TOKEN --repo "$GITHUB_REPOSITORY" --body "$NEW"
+          if [ "$NEW" != "$IG_TOKEN" ]; then
+            if [ -n "$GH_PAT" ]; then
+              GH_TOKEN="$GH_PAT" gh secret set IG_TOKEN --repo "$GITHUB_REPOSITORY" --body "$NEW"
+            else
+              echo "problem=non-enregistree" >> "$GITHUB_OUTPUT"
+            fi
           fi
 
       - uses: actions/checkout@v4
-        if: steps.check.outputs.skip != 'true'
+        if: steps.check.outputs.problem == ''
 
       - uses: actions/setup-python@v5
-        if: steps.check.outputs.skip != 'true'
+        if: steps.check.outputs.problem == ''
         with:
           python-version: '3.12'
 
       - name: Importer les nouveaux posts
-        if: steps.check.outputs.skip != 'true'
+        id: import
+        if: steps.check.outputs.problem == ''
         env:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
           GH_TOKEN: ${{ github.token }}
@@ -65,10 +83,13 @@ jobs:
           # Posts refusés = ceux des pull requests fermées sans validation.
           IGNORE=$(gh pr list --state closed --head "$BRANCH" --limit 100 --json body,mergedAt \
             --jq '.[] | select(.mergedAt == null) | .body' | grep -o 'ids: [0-9,]*' | cut -d' ' -f2 | paste -sd, -)
-          python scripts/import_instagram.py --api --ignore-ids "$IGNORE" --summary "$RUNNER_TEMP/pr.md"
+          CODE=0
+          python scripts/import_instagram.py --api --ignore-ids "$IGNORE" --summary "$RUNNER_TEMP/pr.md" || CODE=$?
+          if [ "$CODE" = 3 ]; then echo "problem=expiree" >> "$GITHUB_OUTPUT"; exit 0; fi
+          exit "$CODE"
 
       - name: Proposer les fiches à valider
-        if: steps.check.outputs.skip != 'true'
+        if: steps.import.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -88,3 +109,50 @@ jobs:
           else
             gh pr create --head "$BRANCH" --base main --title "🍽️ Nouveaux restos à valider" --body-file "$RUNNER_TEMP/pr.md"
           fi
+
+      - name: Alerte clé Instagram (ticket envoyé par e-mail)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ALERT_USER: ${{ vars.ALERT_USER }}
+          PROBLEM: ${{ inputs.test_alerte && 'test' || steps.check.outputs.problem || steps.import.outputs.problem || steps.refresh.outputs.problem }}
+          IMPORT_OK: ${{ steps.import.outcome }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          OPEN=$(gh issue list --repo "$GITHUB_REPOSITORY" --label "$LABEL" --state open --json number -q '.[0].number' 2>/dev/null || true)
+          OPEN_BODY=$( [ -n "$OPEN" ] && gh issue view "$OPEN" --repo "$GITHUB_REPOSITORY" --json body -q .body || true)
+          if [ -z "$PROBLEM" ]; then
+            # La clé a servi sans erreur : on ferme une éventuelle alerte précédente.
+            # (sauf « clé non enregistrée » : l'ancienne clé marche encore quelques jours, le ticket se ferme à la main)
+            [ "$IMPORT_OK" = success ] && [ -n "$OPEN" ] && [[ "$OPEN_BODY" != *"type: non-enregistree"* ]] && gh issue close "$OPEN" --repo "$GITHUB_REPOSITORY" --comment "✅ La clé Instagram fonctionne de nouveau. Merci !"
+            exit 0
+          fi
+          [ -n "$OPEN" ] && { echo "Alerte déjà ouverte (#$OPEN)."; exit 0; }
+          case "$PROBLEM" in
+            expiree)  WHY="La clé Instagram a **expiré** (ou a été révoquée) : le robot ne peut plus lire les nouveaux posts." ;;
+            non-enregistree) WHY="Instagram a fourni une nouvelle clé, mais le robot n'a pas pu l'enregistrer (pas de secret \`GH_PAT\`). **L'ancienne clé va bientôt expirer** : remplace-la dès que possible." ;;
+            test) WHY="🧪 **Ceci est un test** : si tu reçois cet e-mail, les alertes du robot fonctionnent. Rien à faire, ce ticket se fermera tout seul au prochain passage du robot. Voici à quoi ressemblera le vrai message :" ;;
+            *) WHY="Aucune clé Instagram n'est enregistrée : le robot ne peut pas lire les nouveaux posts." ;;
+          esac
+          {
+            echo "$WHY"
+            echo
+            echo "### Pour la remplacer (5 minutes)"
+            echo "1. Ouvre https://developers.facebook.com/apps/ → ton app → **Cas d'utilisation** → **Personnaliser** (Instagram) → **Configuration de l'API avec la connexion Instagram**."
+            echo "2. Dans « Générer des tokens d'accès », clique sur **Générer le token** à côté de @copainsgourmands et copie-le."
+            echo "3. Ouvre $REPO_URL/settings/secrets/actions → **IG_TOKEN** → **Update secret** → colle le token → **Update secret**."
+            echo "   (ou dans un terminal, dans le dossier du site : \`gh secret set IG_TOKEN\`)"
+            echo
+            if [ "$PROBLEM" = non-enregistree ]; then
+              echo "Une fois la clé remplacée, ferme ce ticket (bouton « Close issue »)."
+            else
+              echo "Ce ticket se fermera tout seul au prochain passage du robot (le soir) si la nouvelle clé fonctionne."
+            fi
+            echo "Pour le lancer tout de suite : $REPO_URL/actions/workflows/instagram.yml → **Run workflow**."
+            echo
+            echo "_Astuce : avec un secret \`GH_PAT\` (voir le README, section 6), la clé se renouvelle toute seule et ce rappel n'arrive plus._"
+            echo "<!-- type: $PROBLEM -->"
+          } > "$RUNNER_TEMP/alerte.md"
+          gh label create "$LABEL" --repo "$GITHUB_REPOSITORY" --color FBCA04 --description "Alerte du robot Instagram" --force
+          ASSIGN=(); [ -n "$ALERT_USER" ] && ASSIGN=(--assignee "$ALERT_USER")
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "🔑 Clé Instagram à renouveler" --label "$LABEL" "${ASSIGN[@]}" --body-file "$RUNNER_TEMP/alerte.md"

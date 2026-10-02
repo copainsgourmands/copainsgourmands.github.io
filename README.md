@@ -80,12 +80,12 @@ Pour un nom de domaine perso (environ 10 €/an), va dans Settings → Pages →
 
 Le site est en ligne sur https://copainsgourmands.github.io/.
 
-Un robot GitHub (`.github/workflows/instagram.yml`) regarde le compte Instagram **toutes les heures**. À chaque nouveau post, il prépare la fiche (photos, adresse, carte) et ouvre une **pull request « Nouveaux restos à valider »**. Tu reçois un e-mail de GitHub.
+Un robot GitHub (`.github/workflows/instagram.yml`) regarde le compte Instagram **tous les soirs** (vers 20h l'été, 19h l'hiver). À chaque nouveau post, il prépare la fiche (photos, adresse, carte) et ouvre une **pull request « Nouveaux restos à valider »**. Tu reçois un e-mail de GitHub.
 - **Valider** : « Merge pull request ». Le site est à jour 2 minutes après.
 - **Corriger avant** : onglet « Files changed », puis `data/restaurants.csv`, puis « Edit file ».
 - **Refuser** : « Close pull request ». Ces posts ne seront plus proposés.
 
-Le robot a besoin d'une clé d'accès Instagram, enregistrée dans le secret `IG_TOKEN` (Settings → Secrets and variables → Actions). Le lundi, il renouvelle cette clé, valable 60 jours. Pour que ce renouvellement soit enregistré automatiquement, ajoute aussi un secret `GH_PAT` : un jeton GitHub limité à ce dépôt, avec la permission « Secrets : read and write ». Sans lui, il faudra recoller une nouvelle clé tous les 60 jours.
+Le robot a besoin d'une clé d'accès Instagram, enregistrée dans le secret `IG_TOKEN` (Settings → Secrets and variables → Actions). Le lundi, il renouvelle cette clé, valable 60 jours. **Si la clé ne marche plus**, il ouvre un ticket « 🔑 Clé Instagram à renouveler » assigné au compte indiqué dans la variable `ALERT_USER` : tu le reçois par e-mail, avec la marche à suivre. Pour que ce renouvellement soit enregistré automatiquement, ajoute aussi un secret `GH_PAT` : un jeton GitHub limité à ce dépôt, avec la permission « Secrets : read and write ». Sans lui, il faudra recoller une nouvelle clé tous les 60 jours.
 
 Pour lancer le robot tout de suite : onglet Actions, puis « Nouveaux posts Instagram », puis « Run workflow ».
 

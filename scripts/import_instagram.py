@@ -29,6 +29,7 @@ import re
 import sys
 import time
 import unicodedata
+import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
@@ -663,7 +664,13 @@ def load_posts_api(token: str, ignore: set[str]) -> tuple[list[dict], list[dict]
     url = "https://graph.instagram.com/me/media?" + urllib.parse.urlencode({"fields": fields, "limit": 50, "access_token": token})
     items = []
     while url:
-        data = http_json(url)
+        try:
+            data = http_json(url)
+        except urllib.error.HTTPError as e:
+            if e.code in (400, 401, 403):
+                print(f"Clé Instagram refusée (HTTP {e.code}) : elle a expiré ou a été révoquée.")
+                sys.exit(3)  # code repéré par le robot GitHub, qui ouvre alors un ticket d'alerte
+            raise
         items += data.get("data", [])
         url = data.get("paging", {}).get("next")
     print(f"{len(items)} posts sur le compte (API).")
