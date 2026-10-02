@@ -78,7 +78,7 @@ Pour un nom de domaine perso (environ 10 €/an), va dans Settings → Pages →
 
 ## 6. Mise à jour automatique à chaque nouveau post
 
-Le site est en ligne sur https://arnaudriche03-sys.github.io/copains-gourmands/.
+Le site est en ligne sur https://copainsgourmands.github.io/.
 
 Un robot GitHub (`.github/workflows/instagram.yml`) regarde le compte Instagram **toutes les heures**. À chaque nouveau post, il prépare la fiche (photos, adresse, carte) et ouvre une **pull request « Nouveaux restos à valider »**. Tu reçois un e-mail de GitHub.
 - **Valider** : « Merge pull request ». Le site est à jour 2 minutes après.
