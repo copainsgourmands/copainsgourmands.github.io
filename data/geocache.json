@@ -534,5 +534,12 @@
   "postcode": null,
   "city": "Madrid",
   "label": "Madrid"
+ },
+ "ban:25 Avenue Pierre 1er de Serbie, 75016 Paris": {
+  "lat": 48.866824,
+  "lng": 2.29776,
+  "postcode": "75116",
+  "city": "Paris",
+  "label": "25 Avenue Pierre Ier de Serbie 75116 Paris"
  }
 }
