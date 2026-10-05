@@ -37,7 +37,7 @@ const schema = {
         </div>
       </div>
       <div class="collage" aria-hidden="true">
-        {collage.map((r, i) => <img class={`c${i}`} src={url(thumb(r.photos[0]))} alt="" width="480" height="480" />)}
+        {collage.map((r, i) => <img class={`c${i}`} src={url(thumb(r.photos[0]))} alt="" />)}
       </div>
     </div>
     <div class="wrap">
@@ -73,7 +73,7 @@ const schema = {
           <li>
             <a href={url(`${lang}/resto/${r.slug}/`)}>
               <span class="pos">{i + 1}</span>
-              <img src={url(thumb(r.photos[0]))} alt="" width="480" height="480" loading="lazy" />
+              <img src={url(thumb(r.photos[0]))} alt="" />
               <span class="name">{r.name}<small>{cuisineLabel(r.cuisine, lang)}</small></span>
               <span class="score">{formatRating(r.rating, lang)}★</span>
             </a>

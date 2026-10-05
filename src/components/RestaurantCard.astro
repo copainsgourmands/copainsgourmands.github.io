@@ -27,7 +27,7 @@ const searchText = searchable
   data-name={r.name.toLowerCase()}
 >
   <div class="photo">
-    <img src={url(thumb(r.photos[0]))} alt={r.name} width="480" height="480" decoding="async"
+    <img src={url(thumb(r.photos[0]))} alt={r.name} width="600" height="600" decoding="async"
       loading={priority ? 'eager' : 'lazy'} fetchpriority={priority === 'high' ? 'high' : undefined} />
     {r.rating != null && <span class="badge" style={`background:${ratingColor(r.rating)}`}>{formatRating(r.rating, lang)}★</span>}
     {rank && <span class="rank">#{rank}</span>}

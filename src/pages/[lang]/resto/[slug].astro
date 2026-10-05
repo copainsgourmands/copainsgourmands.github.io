@@ -75,7 +75,7 @@ const others = restaurants
       <div class="gallery" role="group" aria-roledescription="carousel" aria-label={`${t(lang, 'gallery.label')} – ${name}`}>
         <div class="slides" id="slides" tabindex="0">
           {r.photos.map((p, i) => (
-            <img src={url(p)} alt={`${name} – ${i + 1}/${r.photos.length}`} width="900" height="1200" decoding="async"
+            <img src={url(p)} alt={`${name} – ${i + 1}/${r.photos.length}`} decoding="async"
               loading={i ? 'lazy' : 'eager'} fetchpriority={i ? undefined : 'high'} />
           ))}
         </div>
