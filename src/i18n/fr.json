@@ -67,7 +67,6 @@
   "seo.map.title": "La carte de nos {n} adresses",
   "seo.map.description": "Toutes les adresses testées sur une seule carte : {cities}… Touchez une épingle pour lire notre avis.",
   "seo.resto.title": "{name}, {area} – notre avis",
-  "stats.arrondissements": "arrondissements de Paris",
   "a11y.skip": "Aller au contenu",
   "a11y.skipMap": "Passer la carte",
   "a11y.newTab": "(nouvel onglet)",

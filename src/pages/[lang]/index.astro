@@ -43,10 +43,10 @@ const schema = {
     <div class="wrap">
       <dl class="stats">
         <div><dt>{t(lang, 'stats.restos')}</dt><dd>{s.count}</dd></div>
+        <div><dt>{t(lang, 'stats.areas')}</dt><dd>{s.areas}</dd></div>
         {HAS_RATINGS
           ? <div><dt>{t(lang, 'stats.avg')}</dt><dd>{formatRating(Math.round(s.avg * 10) / 10, lang)}<small>/5</small></dd></div>
-          : <div><dt>{t(lang, 'stats.arrondissements')}</dt><dd>{s.arrondissements}</dd></div>}
-        <div><dt>{t(lang, 'stats.cities')}</dt><dd>{s.cities}</dd></div>
+          : <div><dt>{t(lang, 'stats.cities')}</dt><dd>{s.cities}</dd></div>}
       </dl>
     </div>
   </section>

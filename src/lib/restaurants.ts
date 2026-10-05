@@ -71,9 +71,9 @@ export function formatRating(rating: number | null, lang: Lang): string {
 export function stats() {
   const rated = restaurants.filter((r) => r.rating != null);
   const avg = rated.reduce((s, r) => s + (r.rating as number), 0) / (rated.length || 1);
-  const arrondissements = new Set(restaurants.map((r) => r.arrondissement).filter((n) => n != null));
+  const areas = new Set(restaurants.map(areaKey));
   const cities = new Set(restaurants.map((r) => r.city).filter(Boolean));
-  return { count: restaurants.length, arrondissements: arrondissements.size, cities: cities.size, avg };
+  return { count: restaurants.length, areas: areas.size, cities: cities.size, avg };
 }
 
 /** Villes les plus fournies, dans la langue de la page (descriptions pour Google et les aperçus). */

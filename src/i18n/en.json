@@ -67,7 +67,6 @@
   "seo.map.title": "Map of our {n} favourite spots",
   "seo.map.description": "Every place we've tried on one map: {cities}… Tap a pin to read our review.",
   "seo.resto.title": "{name}, {area} – our review",
-  "stats.arrondissements": "Paris arrondissements",
   "a11y.skip": "Skip to content",
   "a11y.skipMap": "Skip the map",
   "a11y.newTab": "(opens in a new tab)",

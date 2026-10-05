@@ -30,6 +30,8 @@ jobs:
           python-version: '3.12'
       # Le site est régénéré depuis le CSV : une correction faite directement sur GitHub est prise en compte.
       - run: pip install --quiet pillow && python scripts/import_instagram.py --csv-only
+      # Images d'aperçu des liens partagés et vignettes des épingles de la carte (non versionnées).
+      - run: python scripts/make_images.py
       - run: npm ci
       - run: npm run build
         env:
