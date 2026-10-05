@@ -49,7 +49,7 @@ PHOTOS_DIR = ROOT / "public" / "photos"
 
 COLUMNS = [
     "slug", "inclure", "statut", "nom", "note", "cuisine", "prix", "adresse", "autres_adresses", "ville",
-    "arrondissement", "lat", "lng", "date", "avis", "instagram_resto", "lien_instagram", "photos", "position",
+    "arrondissement", "lat", "lng", "date", "avis", "avis_en", "instagram_resto", "lien_instagram", "photos", "position",
     "adresse_geocodee", "sources_export",
 ]
 IMAGE_EXT = (".jpg", ".jpeg", ".png", ".webp", ".heic")
@@ -130,6 +130,16 @@ def fix_text(s: str) -> str:
         return s.encode("latin-1").decode("utf-8")
     except (UnicodeEncodeError, UnicodeDecodeError):
         return s
+
+
+# Mots très courants : suffisent à deviner la langue d'une légende (« avis » en français, « avis_en » en anglais).
+FR_WORDS = set("le la les et une des du au aux est très pour avec dans sur pas vous nous on qui mais cette ce entre".split())
+EN_WORDS = set("the and is are was we our you with for this of to in so but very from my one".split())
+
+
+def is_english(text: str) -> bool:
+    words = re.findall(r"[a-zà-ÿœ']+", text.lower())
+    return sum(w in EN_WORDS for w in words) > sum(w in FR_WORDS for w in words)
 
 
 def slugify(s: str) -> str:
@@ -541,13 +551,16 @@ def merge_export(rows: dict[str, dict], posts: list[dict], export: Path) -> tupl
             "lat": f"{latest_post['exif_geo'][0]:.6f}" if latest_post["exif_geo"] else "",
             "lng": f"{latest_post['exif_geo'][1]:.6f}" if latest_post["exif_geo"] else "",
             "date": datetime.fromtimestamp(latest_post["ts"], timezone.utc).date().isoformat(),
-            "avis": "\n\n".join(i["review"] for _, i in reversed(items) if i["review"]),
+            "avis": "",
+            "avis_en": "",
             "instagram_resto": pick("handle") or "",
             "lien_instagram": latest_post.get("permalink", ""),
             "photos": "",
             "adresse_geocodee": "",
             "sources_export": sources,
         }
+        review = "\n\n".join(i["review"] for _, i in reversed(items) if i["review"])
+        rows[slug]["avis_en" if is_english(review) else "avis"] = review
         added += 1
     return added, updated
 
@@ -623,6 +636,10 @@ def refresh_status(rows: dict[str, dict]):
                 issues.append("pas de photo (non publié)")
             if r["nom"].startswith("Post du "):
                 issues.append("nom à renseigner")
+            if r["avis"] and not r["avis_en"]:
+                issues.append("avis à traduire en anglais (colonne avis_en)")
+            elif r["avis_en"] and not r["avis"]:
+                issues.append("avis à traduire en français (colonne avis)")
         r["statut"] = " ; ".join(issues) or "ok"
 
 
@@ -645,7 +662,7 @@ def write_json(rows: dict[str, dict]) -> int:
             "arrondissement": arr if ville in ("", "Paris") else None,
             "other_addresses": [a.strip() for a in r["autres_adresses"].split("·") if a.strip()],
             "lat": to_float(r["lat"]), "lng": to_float(r["lng"]), "rating": to_float(r["note"]),
-            "review": r["avis"], "cuisine": r["cuisine"] or None, "price": r["prix"] or None,
+            "review": r["avis"] or r["avis_en"], "review_en": r["avis_en"] or r["avis"], "cuisine": r["cuisine"] or None, "price": r["prix"] or None,
             "date": r["date"], "photos": r["photos"].split("|"), "instagram_url": r["lien_instagram"] or None,
             "instagram_handle": r["instagram_resto"].lstrip("@") or None,
         })
@@ -734,7 +751,7 @@ def write_summary(path: str, rows: dict[str, dict], new_slugs: list[str], posts:
                       f"- **Où** : {r['adresse'] or '—'} {f'({facts})' if facts else ''}",
                       f"- **Post** : {r['lien_instagram'] or '—'}",
                       f"- **À vérifier** : {r['statut']}" if r["statut"] != "ok" else "- **À vérifier** : rien, tout a été trouvé",
-                      "", "> " + r["avis"][:300].replace("\n", "\n> "), "", '<br clear="right">', ""]
+                      "", "> " + (r["avis"] or r["avis_en"])[:300].replace("\n", "\n> "), "", '<br clear="right">', ""]
     if links:
         lines += [f"{links} lien(s) « Voir le post » ajouté(s) aux restos déjà publiés.", ""]
     lines += ["---",

@@ -12,6 +12,8 @@ export interface Restaurant {
   lng: number | null;
   rating: number | null;
   review: string;
+  /** Avis en anglais (colonne « avis_en » du CSV). */
+  review_en?: string;
   cuisine: string | null;
   price: string | null;
   date: string;
@@ -88,9 +90,13 @@ const INVITATION_RE = /^[ \t]*\*[ \t]*invitation[ \t]*$/im;
 export function isSponsored(r: Restaurant): boolean {
   return INVITATION_RE.test(r.review);
 }
+/** Avis dans la langue de la page. */
+export function reviewIn(r: Restaurant, lang: Lang): string {
+  return lang === 'en' ? r.review_en ?? r.review : r.review;
+}
 /** Avis affiché, sans la ligne « *invitation » (remplacée par la mention de collaboration). */
-export function reviewText(r: Restaurant): string {
-  return r.review.replace(new RegExp(INVITATION_RE.source, 'gim'), '').replace(/\n{3,}/g, '\n\n').trim();
+export function reviewText(r: Restaurant, lang: Lang): string {
+  return reviewIn(r, lang).replace(new RegExp(INVITATION_RE.source, 'gim'), '').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 /** Émoji affiché sur l'épingle, selon la cuisine (colonne « cuisine » du CSV). */

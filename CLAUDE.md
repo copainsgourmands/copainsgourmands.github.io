@@ -8,6 +8,7 @@ L'utilisateur écrit en français : lui répondre en français, en termes simple
 Export Instagram (`data/raw/`) ou API Instagram → `scripts/import_instagram.py` → `data/restaurants.csv` → `data/restaurants.json` → site.
 - **`data/restaurants.csv` est la source de vérité** : il contient des corrections faites à la main (noms, adresses, positions vérifiées). Ne jamais le régénérer de zéro ; modifier les lignes, puis `npm run import -- --csv-only`.
 - Le déploiement (`.github/workflows/deploy.yml`) relance `--csv-only` avant le build : une correction du CSV suffit.
+- Avis bilingues : colonne `avis` = français (site FR), `avis_en` = anglais (site EN). Le robot range un nouveau post dans la colonne de sa langue ; si l'autre est vide, le site affiche l'original et le statut signale « avis à traduire ».
 
 ## Commandes
 - `npm run dev` → http://localhost:4321 · `npm run build`

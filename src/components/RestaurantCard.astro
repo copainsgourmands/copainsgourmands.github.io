@@ -1,10 +1,10 @@
 ---
 import StarRating from './StarRating.astro';
-import { areaLabel, areaKey, ratingColor, formatRating, thumb, isSponsored, type Restaurant } from '../lib/restaurants';
+import { areaLabel, areaKey, ratingColor, formatRating, thumb, isSponsored, reviewIn, type Restaurant } from '../lib/restaurants';
 import { url, t, type Lang } from '../lib/i18n';
 interface Props { r: Restaurant; lang: Lang; rank?: number }
 const { r, lang, rank } = Astro.props;
-const searchText = [r.name, r.cuisine, r.review, r.address, areaLabel(r, lang)].join(' ').toLowerCase();
+const searchText = [r.name, r.cuisine, reviewIn(r, lang), r.address, areaLabel(r, lang)].join(' ').toLowerCase();
 ---
 <a
   class="card"

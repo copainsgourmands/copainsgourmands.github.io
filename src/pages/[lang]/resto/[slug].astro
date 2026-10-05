@@ -4,7 +4,7 @@ import StarRating from '../../../components/StarRating.astro';
 import RestaurantCard from '../../../components/RestaurantCard.astro';
 import MapView from '../../../components/MapView.astro';
 import { t, url, LANGS, formatMonth, type Lang } from '../../../lib/i18n';
-import { restaurants, areaLabel, mapPoints, isSponsored, reviewText, type Restaurant } from '../../../lib/restaurants';
+import { restaurants, areaLabel, mapPoints, isSponsored, reviewIn, reviewText, type Restaurant } from '../../../lib/restaurants';
 
 export function getStaticPaths() {
   return LANGS.flatMap((lang) => restaurants.map((r) => ({ params: { lang, slug: r.slug }, props: { r } })));
@@ -15,7 +15,7 @@ const { r } = Astro.props as { r: Restaurant };
 const point = mapPoints(lang).find((p) => p.slug === r.slug);
 // Les @mentions de la légende deviennent des liens vers les comptes Instagram.
 const sponsored = isSponsored(r);
-const reviewParts = reviewText(r).split(/(@[\w.]*\w)/g);
+const reviewParts = reviewText(r, lang).split(/(@[\w.]*\w)/g);
 const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${r.name} ${r.address}`)}`;
 const others_addresses = r.other_addresses ?? [];
 
@@ -27,7 +27,7 @@ const others = restaurants
   .slice(0, 3)
   .map((x) => x.o);
 ---
-<Base lang={lang} title={r.name} description={r.review.slice(0, 155)}>
+<Base lang={lang} title={r.name} description={reviewText(r, lang).slice(0, 155)}>
   <article class="wrap resto">
     <a class="back link-arrow" href={url(`${lang}/catalogue/`)}>← {t(lang, 'resto.back')}</a>
 
@@ -63,7 +63,7 @@ const others = restaurants
           </div>
         )}
 
-        {r.review && (
+        {reviewIn(r, lang) && (
           <div class="review">
             <p class="label">{t(lang, 'resto.myReview')}</p>
             <blockquote>
