@@ -4,13 +4,14 @@
 // pour les moteurs et les robots d'aperçu qui n'exécutent pas le JavaScript.
 import { url } from '../lib/i18n';
 import { ogImage } from '../lib/restaurants';
-import { SITE } from '../lib/site';
+import { SITE, siteSchema } from '../lib/site';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const abs = (p: string) => new URL(url(p), Astro.site).href;
 const image = ogImage('fr');
 const title = 'Copains Gourmands – Nos adresses préférées à Paris et ailleurs';
 const description = 'Nos adresses préférées. Paris, et parfois ailleurs. · Our favourite spots in Paris and beyond.';
+const schema = { '@context': 'https://schema.org', '@graph': siteSchema(abs) };
 ---
 <!doctype html>
 <html lang="fr">
@@ -34,6 +35,7 @@ const description = 'Nos adresses préférées. Paris, et parfois ailleurs. · O
     <meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
     <link rel="icon" href={url('favicon.ico')} sizes="32x32" />
     <link rel="apple-touch-icon" href={url('apple-touch-icon.png')} />
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(schema).replace(/</g, '\\u003c')} />
     <script is:inline define:vars={{ base }}>
       const lang = (navigator.language || 'fr').toLowerCase().startsWith('fr') ? 'fr' : 'en';
       location.replace(`${base}/${lang}/`);
@@ -45,6 +47,7 @@ const description = 'Nos adresses préférées. Paris, et parfois ailleurs. · O
     </style>
   </head>
   <body>
+    <h1>{SITE.name}</h1>
     <p><a href={`${base}/fr/`}>Français</a> · <a href={`${base}/en/`} lang="en">English</a></p>
   </body>
 </html>

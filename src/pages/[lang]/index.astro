@@ -4,7 +4,7 @@ import RestaurantCard from '../../components/RestaurantCard.astro';
 import MapView from '../../components/MapView.astro';
 import { t, tf, url, langPaths, type Lang } from '../../lib/i18n';
 import { restaurants, stats, mapPoints, formatRating, thumb, areaLabel, cuisineLabel, topCities, HAS_RATINGS } from '../../lib/restaurants';
-import { SITE } from '../../lib/site';
+import { SITE, siteSchema } from '../../lib/site';
 
 export const getStaticPaths = langPaths;
 const lang = Astro.params.lang as Lang;
@@ -17,10 +17,7 @@ const collage = restaurants.slice(0, 4);
 const abs = (p: string) => new URL(url(p), Astro.site).href;
 const schema = {
   '@context': 'https://schema.org',
-  '@graph': [
-    { '@type': 'WebSite', name: SITE.name, url: abs(`${lang}/`), inLanguage: lang },
-    { '@type': 'Organization', name: SITE.name, url: abs('/'), logo: abs('logo.png'), sameAs: [SITE.instagram] },
-  ],
+  '@graph': siteSchema(abs),
 };
 ---
 <Base lang={lang} fullTitle={t(lang, 'seo.home.title')}
