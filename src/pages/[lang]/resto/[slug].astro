@@ -80,14 +80,9 @@ const others = restaurants
           ))}
         </div>
         {r.photos.length > 1 && (
-          <>
-            <button type="button" class="arrow prev" id="prev" aria-label={t(lang, 'gallery.prev')} hidden>‹</button>
-            <button type="button" class="arrow next" id="next" aria-label={t(lang, 'gallery.next')}>›</button>
-            <p class="counter" aria-live="polite"><span id="current">1</span> / {r.photos.length}</p>
-            <div class="dots" id="dots" aria-hidden="true">
-              {r.photos.map((_, i) => <span class:list={{ on: i === 0 }}></span>)}
-            </div>
-          </>
+          <div class="dots" id="dots">
+            {r.photos.map((_, i) => <button type="button" aria-label={`Photo ${i + 1}`} class:list={{ on: i === 0 }}></button>)}
+          </div>
         )}
       </div>
 
@@ -153,17 +148,13 @@ const others = restaurants
     )}
   </article>
   <script>
-    // Galerie : défilement au doigt, flèches (souris), touches ← → et compteur.
+    // Galerie : défilement au doigt, points, et touches ← → du clavier.
     const slides = document.getElementById('slides');
-    const dots = document.querySelectorAll<HTMLElement>('#dots span');
-    const prev = document.getElementById('prev') as HTMLButtonElement | null;
-    const next = document.getElementById('next') as HTMLButtonElement | null;
-    const current = document.getElementById('current');
+    const dots = document.querySelectorAll<HTMLButtonElement>('#dots button');
     if (slides && dots.length) {
       const go = (i: number) => slides.scrollTo({ left: i * slides.clientWidth, behavior: 'smooth' });
       const index = () => Math.round(slides.scrollLeft / slides.clientWidth);
-      prev?.addEventListener('click', () => go(index() - 1));
-      next?.addEventListener('click', () => go(index() + 1));
+      dots.forEach((d, i) => d.addEventListener('click', () => go(i)));
       slides.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowLeft') { e.preventDefault(); go(index() - 1); }
         if (e.key === 'ArrowRight') { e.preventDefault(); go(index() + 1); }
@@ -171,9 +162,6 @@ const others = restaurants
       slides.addEventListener('scroll', () => {
         const i = index();
         dots.forEach((d, j) => d.classList.toggle('on', i === j));
-        if (current) current.textContent = String(i + 1);
-        if (prev) prev.hidden = i === 0;
-        if (next) next.hidden = i === dots.length - 1;
       }, { passive: true });
     }
   </script>
@@ -190,26 +178,9 @@ const others = restaurants
   .slides::-webkit-scrollbar { display: none; }
   .slides img { flex: 0 0 100%; width: 100%; aspect-ratio: 1; object-fit: cover; scroll-snap-align: start; }
   .slides:focus-visible { outline-offset: -4px; }
-  .dots { position: absolute; bottom: 14px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; pointer-events: none; }
-  .dots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.6); transition: width .25s, background-color .25s; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
-  .dots span.on { background: #fff; width: 22px; border-radius: 99px; }
-  /* Trop de photos pour des points lisibles : le compteur suffit. */
-  .dots:has(span:nth-child(9)) { display: none; }
-  .counter {
-    position: absolute; top: 12px; right: 12px; margin: 0; padding: 3px 10px; border-radius: 999px;
-    background: rgba(16, 22, 46, .6); color: #fff; font-size: .8rem; font-weight: 600; font-variant-numeric: tabular-nums;
-  }
-  .arrow {
-    position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 0;
-    background: rgba(255, 255, 255, .92); color: var(--blue); font-size: 1.8rem; line-height: 1; padding: 0 0 4px; cursor: pointer;
-    box-shadow: 0 4px 14px -4px rgba(0, 0, 0, .45); transition: background-color .2s, transform .2s;
-  }
-  .arrow:hover { background: #fff; transform: translateY(-50%) scale(1.06); }
-  .arrow[hidden] { display: none; }
-  .prev { left: 12px; }
-  .next { right: 12px; }
-  /* Au doigt, on fait glisser les photos : les flèches ne servent qu'à la souris. */
-  @media (hover: none) { .arrow { display: none; } }
+  .dots { position: absolute; bottom: 12px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; }
+  .dots button { width: 8px; height: 8px; border-radius: 50%; border: 0; background: rgba(255,255,255,.6); padding: 0; cursor: pointer; transition: width .25s, background-color .25s; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+  .dots button.on { background: #fff; width: 22px; border-radius: 99px; }
   h1 { font-size: clamp(2.4rem, 6vw, 4rem); margin: 14px 0 12px; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .chips span { border-radius: 999px; padding: 4px 13px; font-size: .85rem; font-weight: 500; color: var(--blue); background: var(--blue-soft); }

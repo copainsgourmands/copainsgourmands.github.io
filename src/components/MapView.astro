@@ -45,9 +45,9 @@ const config = {
       await import('leaflet.markercluster');
       layer = (L as any).markerClusterGroup({
         showCoverageOnHover: false,
-        // Regroupement des épingles qui se chevaucheraient ; de près, chaque resto a son épingle
+        // Regroupement seulement quand on dézoome beaucoup ; à l'échelle d'un quartier, chaque resto a son épingle
         // (sauf ceux au même endroit, qui s'écartent au clic).
-        maxClusterRadius: (zoom: number) => (zoom <= 8 ? 60 : zoom <= 11 ? 40 : zoom <= 14 ? 30 : 8),
+        maxClusterRadius: (zoom: number) => (zoom <= 8 ? 60 : zoom <= 11 ? 25 : 6),
         iconCreateFunction: (c: any) =>
           L.divIcon({ html: `<span>${c.getChildCount()}</span>`, className: 'pin-cluster', iconSize: [44, 44] }),
       });
