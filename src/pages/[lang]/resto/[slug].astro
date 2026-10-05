@@ -4,7 +4,7 @@ import StarRating from '../../../components/StarRating.astro';
 import RestaurantCard from '../../../components/RestaurantCard.astro';
 import MapView from '../../../components/MapView.astro';
 import { t, url, LANGS, formatMonth, type Lang } from '../../../lib/i18n';
-import { restaurants, areaLabel, mapPoints, type Restaurant } from '../../../lib/restaurants';
+import { restaurants, areaLabel, mapPoints, isSponsored, reviewText, type Restaurant } from '../../../lib/restaurants';
 
 export function getStaticPaths() {
   return LANGS.flatMap((lang) => restaurants.map((r) => ({ params: { lang, slug: r.slug }, props: { r } })));
@@ -14,7 +14,8 @@ const lang = Astro.params.lang as Lang;
 const { r } = Astro.props as { r: Restaurant };
 const point = mapPoints(lang).find((p) => p.slug === r.slug);
 // Les @mentions de la légende deviennent des liens vers les comptes Instagram.
-const reviewParts = r.review.split(/(@[\w.]*\w)/g);
+const sponsored = isSponsored(r);
+const reviewParts = reviewText(r).split(/(@[\w.]*\w)/g);
 const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${r.name} ${r.address}`)}`;
 const others_addresses = r.other_addresses ?? [];
 
@@ -50,6 +51,10 @@ const others = restaurants
           {r.price && <span>{r.price}</span>}
           <span>{t(lang, 'resto.visited')} {formatMonth(r.date, lang)}</span>
         </div>
+
+        {sponsored && (
+          <p class="collab"><strong>🤝 {t(lang, 'collab.label')}</strong> · {t(lang, 'collab.detail')}</p>
+        )}
 
         {r.rating != null && (
           <div class="rating-box">
@@ -134,7 +139,11 @@ const others = restaurants
   .rating-box :global(.track) { color: rgba(255, 255, 255, .3); }
   blockquote { margin: 0; font-size: 1.15rem; line-height: 1.6; border-left: 3px solid var(--accent); padding-left: 20px; white-space: pre-line; }
   blockquote a { color: var(--blue); font-weight: 700; }
-  .chips + .review { margin-top: 26px; }
+  .chips + .review, .collab + .review { margin-top: 26px; }
+  .collab {
+    margin: 18px 0 0; padding: 10px 14px; border-radius: var(--radius-sm); font-size: .9rem; line-height: 1.45;
+    background: var(--paper-2); border: 1px solid var(--line); color: var(--ink);
+  }
   .address { margin: 26px 0 16px; color: var(--ink-soft); }
   .others { margin: -6px 0 16px; color: var(--ink-soft); }
   .others p { margin: 0 0 4px; }

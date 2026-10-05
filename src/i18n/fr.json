@@ -54,5 +54,10 @@
   "map.view": "Affichage des épingles",
   "map.photos": "Photos",
   "map.labels": "Noms",
-  "map.filter": "Filtrer par type"
+  "map.filter": "Filtrer par type",
+  "legal.title": "Mentions légales & confidentialité",
+  "legal.description": "Éditeur, hébergeur, collaborations commerciales et données personnelles : aucun cookie, aucun traceur.",
+  "footer.nocookies": "Aucun cookie",
+  "collab.label": "Collaboration commerciale",
+  "collab.detail": "invitation : le repas nous a été offert par l'établissement."
 }

@@ -54,5 +54,10 @@
   "map.view": "Pin display",
   "map.photos": "Photos",
   "map.labels": "Names",
-  "map.filter": "Filter by type"
+  "map.filter": "Filter by type",
+  "legal.title": "Legal notice & privacy",
+  "legal.description": "Publisher, hosting, commercial partnerships and personal data: no cookies, no tracking.",
+  "footer.nocookies": "No cookies",
+  "collab.label": "Commercial partnership",
+  "collab.detail": "invitation: the meal was offered to us by the restaurant."
 }

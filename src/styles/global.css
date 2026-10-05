@@ -15,8 +15,8 @@
   --radius-sm: 14px;
   --shadow: 0 12px 32px -14px rgba(1, 24, 90, 0.28);
   --shadow-lg: 0 22px 48px -18px rgba(1, 24, 90, 0.38);
-  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque Variable', system-ui, sans-serif;
+  --font-body: 'Inter Variable', system-ui, sans-serif;
   --wrap: 1180px;
 }
 

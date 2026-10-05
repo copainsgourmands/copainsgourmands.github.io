@@ -82,6 +82,17 @@ export function cityGroups() {
     }));
 }
 
+/** Avis fait sur invitation (« *invitation » dans la légende) : signalé comme collaboration commerciale
+ * (loi n° 2023-451 du 9 juin 2023 sur l'influence commerciale). */
+const INVITATION_RE = /^[ \t]*\*[ \t]*invitation[ \t]*$/im;
+export function isSponsored(r: Restaurant): boolean {
+  return INVITATION_RE.test(r.review);
+}
+/** Avis affiché, sans la ligne « *invitation » (remplacée par la mention de collaboration). */
+export function reviewText(r: Restaurant): string {
+  return r.review.replace(new RegExp(INVITATION_RE.source, 'gim'), '').replace(/\n{3,}/g, '\n\n').trim();
+}
+
 /** Émoji affiché sur l'épingle, selon la cuisine (colonne « cuisine » du CSV). */
 const CUISINE_EMOJI: Record<string, string> = {
   'Matcha & café': '🍵', Boulangerie: '🥐', Brunch: '🥞', Healthy: '🥗',

@@ -1,5 +1,5 @@
 ---
-import { t, type Lang } from '../lib/i18n';
+import { t, url, type Lang } from '../lib/i18n';
 import { SITE } from '../lib/site';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -9,6 +9,7 @@ const { lang } = Astro.props;
     <div>
       <p class="big">{SITE.name}</p>
       <p>{t(lang, 'footer.made')}</p>
+      <p class="legal"><a href={url(`${lang}/mentions-legales/`)}>{t(lang, 'legal.title')}</a> · {t(lang, 'footer.nocookies')}</p>
     </div>
     <a class="btn btn-accent" href={SITE.instagram} target="_blank" rel="noopener">📸 {t(lang, 'footer.follow')} · @{SITE.handle}</a>
   </div>
@@ -19,5 +20,7 @@ const { lang } = Astro.props;
   .foot { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
   .big { font-family: var(--font-display); font-weight: 800; font-size: 1.8rem; margin: 0 0 4px; color: #fff; }
   p { margin: 0; color: rgba(255,255,255,.65); }
+  .legal { margin-top: 10px; font-size: .85rem; }
+  .legal a { color: #fff; }
   .btn:hover { box-shadow: 0 12px 28px -12px rgba(0,0,0,.5); }
 </style>

@@ -1,4 +1,7 @@
 ---
+// Polices servies par le site lui-même : aucune donnée des visiteurs n'est envoyée à Google.
+import '@fontsource-variable/bricolage-grotesque/opsz.css';
+import '@fontsource-variable/inter';
 import '../styles/global.css';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
@@ -21,9 +24,6 @@ const pageTitle = title ? `${title} · ${SITE.name}` : SITE.name;
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description ?? t(lang, 'hero.title')} />
     <link rel="icon" href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/favicon.svg`} type="image/svg+xml" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
     <slot name="head" />
   </head>
   <body class={fullBleed ? 'full-bleed' : ''}>
