@@ -5,7 +5,10 @@ import { SITE } from '../lib/site';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const path = Astro.url.pathname;
-const swapped = path.replace(new RegExp(`/${lang}(/|$)`), `/${otherLang(lang)}$1`);
+// Même page dans l'autre langue (la page 404, sans équivalent, renvoie vers l'accueil).
+const swapped = new RegExp(`/${lang}(/|$)`).test(path)
+  ? path.replace(new RegExp(`/${lang}(/|$)`), `/${otherLang(lang)}$1`)
+  : url(`${otherLang(lang)}/`);
 const links = [
   { href: url(`${lang}/`), label: t(lang, 'nav.home'), match: (p: string) => /\/(fr|en)\/?$/.test(p) },
   { href: url(`${lang}/catalogue/`), label: t(lang, 'nav.catalogue'), match: (p: string) => p.includes('/catalogue') || p.includes('/resto/') },
@@ -18,11 +21,11 @@ const links = [
       <img class="logo-dot" src={url('avatar.webp')} alt="" width="36" height="36" />
       <span>{SITE.name}</span>
     </a>
-    <nav aria-label="Navigation">
+    <nav aria-label={t(lang, 'a11y.mainNav')}>
       {links.map((l) => (
-        <a href={l.href} class:list={['nav-link', { active: l.match(path) }]}>{l.label}</a>
+        <a href={l.href} class:list={['nav-link', { active: l.match(path) }]} aria-current={l.match(path) ? 'page' : undefined}>{l.label}</a>
       ))}
-      <a class="lang" href={swapped} hreflang={otherLang(lang)}>{t(lang, 'lang.switch')}</a>
+      <a class="lang" href={swapped} hreflang={otherLang(lang)} lang={otherLang(lang)} aria-label={t(lang, 'lang.switchName')}>{t(lang, 'lang.switch')}</a>
     </nav>
   </div>
 </header>
@@ -39,7 +42,8 @@ const links = [
   .lang { margin-left: 6px; text-decoration: none; font-weight: 700; font-size: .75rem; letter-spacing: .06em; color: #fff; border: 1.5px solid rgba(255,255,255,.5); padding: 5px 11px; border-radius: 999px; transition: background-color .2s, color .2s; }
   .lang:hover { background: var(--accent); border-color: var(--accent); }
   @media (max-width: 560px) {
-    .logo span:last-child { display: none; }
+    /* Le nom reste lu par les lecteurs d'écran (sinon le lien du logo n'a plus de nom). */
+    .logo span:last-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .nav-link { padding: 7px 9px; font-size: .88rem; }
   }
 </style>

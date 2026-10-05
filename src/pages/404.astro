@@ -1,0 +1,36 @@
+---
+// Page servie par GitHub Pages pour toute adresse inconnue : une seule pour les deux langues.
+import Base from '../layouts/Base.astro';
+import { t, url } from '../lib/i18n';
+---
+<Base lang="fr" title={`${t('fr', 'notfound.title')} · ${t('en', 'notfound.title')}`} noindex>
+  <section class="wrap notfound">
+    <p class="big" aria-hidden="true">404</p>
+    <h1>{t('fr', 'notfound.title')}</h1>
+    <p>{t('fr', 'notfound.text')}</p>
+    <p class="links">
+      <a class="btn btn-accent" href={url('fr/')}>{t('fr', 'notfound.home')}</a>
+      <a class="btn" href={url('fr/catalogue/')}>{t('fr', 'nav.catalogue')}</a>
+      <a class="btn" href={url('fr/carte/')}>{t('fr', 'nav.map')}</a>
+    </p>
+    <div lang="en" class="en">
+      <h2>{t('en', 'notfound.title')}</h2>
+      <p>{t('en', 'notfound.text')}</p>
+      <p class="links">
+        <a class="btn btn-accent" href={url('en/')}>{t('en', 'notfound.home')}</a>
+        <a class="btn" href={url('en/catalogue/')}>{t('en', 'nav.catalogue')}</a>
+        <a class="btn" href={url('en/carte/')}>{t('en', 'nav.map')}</a>
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .notfound { padding-top: 56px; padding-bottom: 40px; max-width: 760px; }
+  .big { font-family: var(--font-display); font-weight: 800; font-size: clamp(5rem, 22vw, 10rem); line-height: .9; color: var(--accent); margin: 0 0 8px; }
+  h1 { font-size: clamp(2.2rem, 7vw, 3.6rem); }
+  h2 { font-size: clamp(1.6rem, 5vw, 2.2rem); }
+  p { font-size: 1.1rem; color: var(--ink-soft); }
+  .links { display: flex; flex-wrap: wrap; gap: 10px; }
+  .en { margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--line); }
+</style>

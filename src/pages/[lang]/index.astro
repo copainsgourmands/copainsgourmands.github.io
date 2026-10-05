@@ -2,8 +2,8 @@
 import Base from '../../layouts/Base.astro';
 import RestaurantCard from '../../components/RestaurantCard.astro';
 import MapView from '../../components/MapView.astro';
-import { t, url, langPaths, type Lang } from '../../lib/i18n';
-import { restaurants, stats, mapPoints, formatRating, thumb, areaLabel, HAS_RATINGS } from '../../lib/restaurants';
+import { t, tf, url, langPaths, type Lang } from '../../lib/i18n';
+import { restaurants, stats, mapPoints, formatRating, thumb, areaLabel, cuisineLabel, topCities, HAS_RATINGS } from '../../lib/restaurants';
 import { SITE } from '../../lib/site';
 
 export const getStaticPaths = langPaths;
@@ -12,8 +12,19 @@ const s = stats();
 const latest = restaurants.slice(0, 6);
 const top = [...restaurants].filter((r) => r.rating != null).sort((a, b) => (b.rating! - a.rating!) || b.date.localeCompare(a.date)).slice(0, 5);
 const collage = restaurants.slice(0, 4);
+
+// Données structurées pour Google : le site et le compte (nom affiché dans les résultats, lien avec Instagram).
+const abs = (p: string) => new URL(url(p), Astro.site).href;
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'WebSite', name: SITE.name, url: abs(`${lang}/`), inLanguage: lang },
+    { '@type': 'Organization', name: SITE.name, url: abs('/'), logo: abs('logo.png'), sameAs: [SITE.instagram] },
+  ],
+};
 ---
-<Base lang={lang}>
+<Base lang={lang} fullTitle={t(lang, 'seo.home.title')}
+  description={tf(lang, 'seo.home.description', { n: s.count, cities: topCities(lang, 4).join(', ') })} schema={schema}>
   <section class="hero">
     <div class="wrap hero-inner">
       <div class="hero-text">
@@ -22,20 +33,20 @@ const collage = restaurants.slice(0, 4);
         <h1>{t(lang, 'hero.title')}</h1>
         <div class="ctas">
           <a class="btn btn-accent" href={url(`${lang}/catalogue/`)}>{t(lang, 'hero.cta.catalogue')} →</a>
-          <a class="btn" href={url(`${lang}/carte/`)}>📍 {t(lang, 'hero.cta.map')}</a>
+          <a class="btn" href={url(`${lang}/carte/`)}><span aria-hidden="true">📍</span> {t(lang, 'hero.cta.map')}</a>
         </div>
       </div>
       <div class="collage" aria-hidden="true">
-        {collage.map((r, i) => <img class={`c${i}`} src={url(thumb(r.photos[0]))} alt="" />)}
+        {collage.map((r, i) => <img class={`c${i}`} src={url(thumb(r.photos[0]))} alt="" width="480" height="480" />)}
       </div>
     </div>
     <div class="wrap">
       <dl class="stats">
         <div><dt>{t(lang, 'stats.restos')}</dt><dd>{s.count}</dd></div>
-        <div><dt>{t(lang, 'stats.areas')}</dt><dd>{s.areas}</dd></div>
         {HAS_RATINGS
           ? <div><dt>{t(lang, 'stats.avg')}</dt><dd>{formatRating(Math.round(s.avg * 10) / 10, lang)}<small>/5</small></dd></div>
-          : <div><dt>{t(lang, 'stats.cities')}</dt><dd>{s.cities}</dd></div>}
+          : <div><dt>{t(lang, 'stats.arrondissements')}</dt><dd>{s.arrondissements}</dd></div>}
+        <div><dt>{t(lang, 'stats.cities')}</dt><dd>{s.cities}</dd></div>
       </dl>
     </div>
   </section>
@@ -62,8 +73,8 @@ const collage = restaurants.slice(0, 4);
           <li>
             <a href={url(`${lang}/resto/${r.slug}/`)}>
               <span class="pos">{i + 1}</span>
-              <img src={url(thumb(r.photos[0]))} alt="" />
-              <span class="name">{r.name}<small>{r.cuisine}</small></span>
+              <img src={url(thumb(r.photos[0]))} alt="" width="480" height="480" loading="lazy" />
+              <span class="name">{r.name}<small>{cuisineLabel(r.cuisine, lang)}</small></span>
               <span class="score">{formatRating(r.rating, lang)}★</span>
             </a>
           </li>
@@ -77,7 +88,9 @@ const collage = restaurants.slice(0, 4);
       <h2>{t(lang, 'home.map')}</h2>
       <a class="link-arrow" href={url(`${lang}/carte/`)}>{t(lang, 'home.mapCta')} →</a>
     </div>
-    <MapView points={mapPoints(lang)} lang={lang} height="420px" />
+    <a class="skip-map" href="#after-map">{t(lang, 'a11y.skipMap')}</a>
+    <MapView points={mapPoints(lang)} lang={lang} height="420px" embedded />
+    <span id="after-map" tabindex="-1"></span>
   </section>
 </Base>
 
@@ -105,6 +118,8 @@ const collage = restaurants.slice(0, 4);
   .stats dd { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(1.8rem, 6vw, 3rem); color: #fff; line-height: 1; }
   .stats small { font-size: .5em; opacity: .7; }
 
+  .skip-map { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .skip-map:focus { position: static; width: auto; height: auto; clip: auto; display: inline-block; margin-bottom: 10px; font-weight: 600; color: var(--blue); }
   .marquee { background: var(--accent); color: #fff; overflow: hidden; white-space: nowrap; padding: 13px 0; font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; letter-spacing: .01em; }
   .track { display: inline-flex; animation: slide var(--marquee-duration, 120s) linear infinite; }
   .track span { padding-right: 8px; }

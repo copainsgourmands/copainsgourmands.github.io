@@ -9,3 +9,6 @@ __pycache__/
 .env.*
 *.zip
 .vscode/
+# Images refaites à chaque déploiement par scripts/make_images.py
+public/og/
+public/pins/

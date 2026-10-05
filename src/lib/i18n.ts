@@ -10,6 +10,21 @@ export function t(lang: Lang, key: string): string {
   return dicts[lang][key] ?? dicts.fr[key] ?? key;
 }
 
+/** Texte avec des {variables} remplacées. */
+export function tf(lang: Lang, key: string, vars: Record<string, string | number>): string {
+  return t(lang, key).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
+}
+
+/** Deux-points : espace avant en français (« Adresse : »), pas en anglais (« Address: »). */
+export function colon(lang: Lang): string {
+  return lang === 'fr' ? '\u00a0:' : ':';
+}
+
+/** Liste lisible : « Paris, Londres et Madrid ». */
+export function listJoin(items: string[], lang: Lang): string {
+  return new Intl.ListFormat(lang, { type: 'conjunction' }).format(items);
+}
+
 export function langPaths() {
   return LANGS.map((lang) => ({ params: { lang } }));
 }

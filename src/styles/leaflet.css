@@ -1,0 +1,3 @@
+/* Styles de Leaflet, chargés avec la carte (et non à l'ouverture de la page) par MapView. */
+@import 'leaflet/dist/leaflet.css';
+@import 'leaflet.markercluster/dist/MarkerCluster.css';

@@ -5,6 +5,8 @@ export default defineConfig({
   site: process.env.SITE || 'http://localhost:4321',
   base: process.env.BASE || '/',
   trailingSlash: 'ignore',
+  // Les pages se chargent au survol d'un lien : la navigation entre fiches est quasi instantanée.
+  prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   vite: {
     // Pré-compilées dès le lancement de `npm run dev`, sinon la carte peut rester vide (erreur 504 de Vite).
     optimizeDeps: { include: ['leaflet', 'leaflet.markercluster'] },

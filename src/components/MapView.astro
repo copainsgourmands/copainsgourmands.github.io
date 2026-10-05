@@ -1,48 +1,60 @@
 ---
-import 'leaflet/dist/leaflet.css';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
 import { url, t, type Lang } from '../lib/i18n';
 
-interface Point { slug: string; name: string; lat: number | null; lng: number | null; ratingLabel: string; color: string; area: string; cuisine: string | null; emoji: string; family: string; photo: string | null }
-interface Props { points: Point[]; lang: Lang; height?: string; zoom?: number; center?: [number, number]; cluster?: boolean; fit?: boolean; mode?: 'photo' | 'label' }
-const { points, lang, height = '480px', zoom = 12, center = [48.8607, 2.3522], cluster = true, fit = false, mode = 'photo' } = Astro.props;
+interface Point { slug: string; name: string; lat: number | null; lng: number | null; ratingLabel: string; color: string; area: string; cuisine: string | null; emoji: string; family: string; photo: string | null; sponsored: boolean }
+interface Props {
+  points: Point[]; lang: Lang; height?: string; zoom?: number; center?: [number, number]; cluster?: boolean; fit?: boolean; mode?: 'photo' | 'label';
+  /** Carte au milieu d'une page : sur mobile, un doigt fait défiler la page (zoom à deux doigts toujours possible). */
+  embedded?: boolean;
+}
+const { points, lang, height = '480px', zoom = 12, center = [48.8607, 2.3522], cluster = true, fit = false, mode = 'photo', embedded = false } = Astro.props;
 const config = {
   points: points.map((p) => ({ ...p, photo: p.photo ? url(p.photo) : null, href: url(`${lang}/resto/${p.slug}/`) })),
-  zoom, center, cluster, fit, cta: t(lang, 'resto.seeCard'),
+  zoom, center, cluster, fit, embedded, cta: t(lang, 'resto.seeCard'), collab: t(lang, 'collab.short'),
 };
 ---
 <div class="map" style={`height:${height}`} data-mode={mode} data-map={JSON.stringify(config)}></div>
 
 <script>
-  import L from 'leaflet';
+  import type * as Leaflet from 'leaflet';
 
   const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
+  // Leaflet et sa feuille de style ne sont chargés qu'à l'approche de la carte : ils ne ralentissent pas l'ouverture de la page.
+  let leaflet: Promise<typeof Leaflet> | null = null;
+  const loadLeaflet = () =>
+    (leaflet ??= Promise.all([import('leaflet'), import('../styles/leaflet.css')]).then(([m]) => (m.default ?? m) as typeof Leaflet));
+
   async function init(el: HTMLElement) {
+    const L = await loadLeaflet();
     const cfg = JSON.parse(el.dataset.map!);
-    const map = L.map(el, { scrollWheelZoom: false, zoomControl: true }).setView(cfg.center, cfg.zoom);
+    const map = L.map(el, {
+      scrollWheelZoom: false,
+      zoomControl: true,
+      dragging: !(cfg.embedded && L.Browser.mobile),
+    }).setView(cfg.center, cfg.zoom);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 19,
       className: 'tiles',
     }).addTo(map);
 
-    let layer: L.LayerGroup = L.layerGroup();
+    let layer: Leaflet.LayerGroup = L.layerGroup();
     if (cfg.cluster) {
       (window as any).L = L;
       await import('leaflet.markercluster');
       layer = (L as any).markerClusterGroup({
         showCoverageOnHover: false,
-        // Regroupement seulement quand on dézoome beaucoup ; à l'échelle d'un quartier, chaque resto a son épingle
+        // Regroupement des épingles qui se chevaucheraient ; de près, chaque resto a son épingle
         // (sauf ceux au même endroit, qui s'écartent au clic).
-        maxClusterRadius: (zoom: number) => (zoom <= 8 ? 60 : zoom <= 11 ? 25 : 6),
+        maxClusterRadius: (zoom: number) => (zoom <= 8 ? 60 : zoom <= 11 ? 40 : zoom <= 14 ? 30 : 8),
         iconCreateFunction: (c: any) =>
           L.divIcon({ html: `<span>${c.getChildCount()}</span>`, className: 'pin-cluster', iconSize: [44, 44] }),
       });
     }
 
     // Une épingle contient les deux rendus ; l'attribut data-mode de la carte choisit lequel s'affiche.
-    const markers: { marker: L.Marker; family: string }[] = [];
+    const markers: { marker: Leaflet.Marker; family: string }[] = [];
     for (const p of cfg.points) {
       const rating = p.ratingLabel ? ` <small>${esc(p.ratingLabel)}★</small>` : '';
       const icon = L.divIcon({
@@ -57,7 +69,7 @@ const config = {
       const popup = `
         <a class="pop" href="${p.href}">
           ${p.photo ? `<img src="${p.photo}" alt="">` : ''}
-          <strong>${esc(p.name)}</strong>
+          <strong>${esc(p.name)}${p.sponsored ? ` <b class="pop-collab">${esc(cfg.collab)}</b>` : ''}</strong>
           <span>${esc(p.area)}${p.cuisine ? ' · ' + esc(p.cuisine) : ''}</span>
           <em>${p.ratingLabel ? `${esc(p.ratingLabel)}/5 ★ — ` : ''}${esc(cfg.cta)} →</em>
         </a>`;
@@ -85,7 +97,14 @@ const config = {
     map.once('click focus', () => map.scrollWheelZoom.enable());
   }
 
-  document.querySelectorAll<HTMLElement>('[data-map]').forEach(init);
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      io.unobserve(e.target);
+      init(e.target as HTMLElement);
+    }
+  }, { rootMargin: '400px' });
+  document.querySelectorAll<HTMLElement>('[data-map]').forEach((el) => io.observe(el));
 </script>
 
 <style is:global>
@@ -133,5 +152,9 @@ const config = {
   .pop img { width: 100%; height: 110px; object-fit: cover; margin-bottom: 8px; }
   .pop strong { font-family: var(--font-display); font-size: 1.05rem; padding: 0 12px; }
   .pop span { font-size: .8rem; color: var(--ink-soft); padding: 0 12px; }
+  .pop-collab {
+    font-family: var(--font-body); font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--ink-soft); background: var(--paper-2); border: 1px solid var(--line); border-radius: 999px; padding: 1px 6px; vertical-align: 2px;
+  }
   .pop em { font-style: normal; font-weight: 700; font-size: .8rem; color: var(--blue); padding: 4px 12px 0; }
 </style>

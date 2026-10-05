@@ -1,10 +1,19 @@
 ---
 import StarRating from './StarRating.astro';
-import { areaLabel, areaKey, ratingColor, formatRating, thumb, isSponsored, reviewIn, type Restaurant } from '../lib/restaurants';
+import { areaLabel, areaKey, ratingColor, formatRating, thumb, isSponsored, reviewIn, cuisineLabel, type Restaurant } from '../lib/restaurants';
 import { url, t, type Lang } from '../lib/i18n';
-interface Props { r: Restaurant; lang: Lang; rank?: number }
-const { r, lang, rank } = Astro.props;
-const searchText = [r.name, r.cuisine, reviewIn(r, lang), r.address, areaLabel(r, lang)].join(' ').toLowerCase();
+interface Props {
+  r: Restaurant; lang: Lang; rank?: number;
+  /** Texte de recherche (catalogue seulement : ailleurs il alourdirait la page pour rien). */
+  searchable?: boolean;
+  /** Carte visible dès l'ouverture : photo chargée tout de suite (`high` = la plus importante de la page). */
+  priority?: 'high' | 'eager';
+}
+const { r, lang, rank, searchable = false, priority } = Astro.props;
+const cuisine = cuisineLabel(r.cuisine, lang);
+const searchText = searchable
+  ? [r.name, r.cuisine, cuisine, reviewIn(r, lang), r.address, areaLabel(r, lang)].join(' ').toLowerCase()
+  : undefined;
 ---
 <a
   class="card"
@@ -18,13 +27,14 @@ const searchText = [r.name, r.cuisine, reviewIn(r, lang), r.address, areaLabel(r
   data-name={r.name.toLowerCase()}
 >
   <div class="photo">
-    <img src={url(thumb(r.photos[0]))} alt={r.name} loading="lazy" width="600" height="600" />
+    <img src={url(thumb(r.photos[0]))} alt={r.name} width="480" height="480" decoding="async"
+      loading={priority ? 'eager' : 'lazy'} fetchpriority={priority === 'high' ? 'high' : undefined} />
     {r.rating != null && <span class="badge" style={`background:${ratingColor(r.rating)}`}>{formatRating(r.rating, lang)}★</span>}
     {rank && <span class="rank">#{rank}</span>}
   </div>
   <div class="body">
     <h3>{r.name}</h3>
-    <p class="meta">{areaLabel(r, lang)}{r.cuisine && ` · ${r.cuisine}`}{r.price && ` · ${r.price}`}</p>
+    <p class="meta">{areaLabel(r, lang)}{cuisine && ` · ${cuisine}`}{r.price && ` · ${r.price}`}</p>
     {r.rating != null && <StarRating rating={r.rating} lang={lang} />}
     {isSponsored(r) && <p class="collab">{t(lang, 'collab.label')}</p>}
   </div>

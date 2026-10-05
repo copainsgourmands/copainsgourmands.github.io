@@ -5,13 +5,38 @@ import '@fontsource-variable/inter';
 import '../styles/global.css';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
-import { t, type Lang } from '../lib/i18n';
-import { IS_DEMO } from '../lib/restaurants';
+import { t, url, otherLang, type Lang } from '../lib/i18n';
+import { IS_DEMO, ogImage } from '../lib/restaurants';
 import { SITE } from '../lib/site';
 
-interface Props { lang: Lang; title?: string; description?: string; fullBleed?: boolean }
-const { lang, title, description, fullBleed = false } = Astro.props;
-const pageTitle = title ? `${title} · ${SITE.name}` : SITE.name;
+interface Props {
+  lang: Lang;
+  /** Titre de la page, suivi de « · Copains Gourmands » (sauf `fullTitle`). */
+  title?: string;
+  fullTitle?: string;
+  description?: string;
+  /** Image d'aperçu (chemin dans public/), 1200×630. */
+  image?: string;
+  imageAlt?: string;
+  type?: 'website' | 'article';
+  /** Date de publication (fiches), au format AAAA-MM-JJ. */
+  published?: string;
+  /** Données structurées (JSON-LD) pour Google. */
+  schema?: object;
+  /** Page sans équivalent dans l'autre langue ni intérêt pour Google (404). */
+  noindex?: boolean;
+  fullBleed?: boolean;
+}
+const { lang, title, fullTitle, description = t(lang, 'hero.title'), image = ogImage(lang), imageAlt = SITE.name, type = 'website', published, schema, noindex = false, fullBleed = false } = Astro.props;
+const pageTitle = fullTitle ?? (title ? `${title} · ${SITE.name}` : SITE.name);
+
+// Adresses absolues : la page, et son équivalent dans l'autre langue (mêmes chemins, préfixe /fr/ ↔ /en/).
+const abs = (path: string) => new URL(path, Astro.site).href;
+const path = Astro.url.pathname.replace(/\/?$/, '/');
+const other = otherLang(lang);
+const paths = { [lang]: path, [other]: path.replace(new RegExp(`/${lang}/`), `/${other}/`) } as Record<Lang, string>;
+const isHome = /\/(fr|en)\/$/.test(path);
+const locale = { fr: 'fr_FR', en: 'en_GB' };
 ---
 <!doctype html>
 <html lang={lang}>
@@ -19,17 +44,45 @@ const pageTitle = title ? `${title} · ${SITE.name}` : SITE.name;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
-    <meta name="description" content={description ?? t(lang, 'hero.title')} />
+    <meta name="description" content={description} />
     <meta name="theme-color" content="#02237d" />
+    {noindex ? <meta name="robots" content="noindex" /> : (
+      <>
+        <link rel="canonical" href={abs(path)} />
+        <link rel="alternate" hreflang="fr" href={abs(paths.fr)} />
+        <link rel="alternate" hreflang="en" href={abs(paths.en)} />
+        <link rel="alternate" hreflang="x-default" href={isHome ? abs(url('/')) : abs(paths.fr)} />
+      </>
+    )}
+
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content={SITE.name} />
     <meta property="og:title" content={pageTitle} />
-    <meta property="og:description" content={description ?? t(lang, 'hero.title')} />
-    <link rel="icon" href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/favicon.svg`} type="image/svg+xml" />
+    <meta property="og:description" content={description} />
+    {!noindex && <meta property="og:url" content={abs(path)} />}
+    <meta property="og:locale" content={locale[lang]} />
+    <meta property="og:locale:alternate" content={locale[other]} />
+    {image && (
+      <>
+        <meta property="og:image" content={abs(url(image))} />
+        <meta property="og:image:type" content="image/jpeg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={imageAlt} />
+      </>
+    )}
+    {published && <meta property="article:published_time" content={published} />}
+    <meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
+
+    <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+    {schema && <script is:inline type="application/ld+json" set:html={JSON.stringify(schema).replace(/</g, '\\u003c')} />}
     <slot name="head" />
   </head>
   <body class={fullBleed ? 'full-bleed' : ''}>
+    <a class="skip" href="#main">{t(lang, 'a11y.skip')}</a>
     {IS_DEMO && <div class="demo-banner">{t(lang, 'demo.banner')}</div>}
     <Navbar lang={lang} />
-    <main><slot /></main>
+    <main id="main" tabindex="-1"><slot /></main>
     {!fullBleed && <Footer lang={lang} />}
   </body>
 </html>
@@ -39,4 +92,11 @@ const pageTitle = title ? `${title} · ${SITE.name}` : SITE.name;
     background: var(--accent); color: #fff; text-align: center;
     font-size: .8rem; font-weight: 600; padding: 6px 16px;
   }
+  /* Lien d'évitement : invisible jusqu'à ce qu'on y arrive au clavier. */
+  .skip {
+    position: absolute; left: 12px; top: -60px; z-index: 2000; background: var(--accent); color: #fff;
+    padding: 10px 16px; border-radius: 999px; font-weight: 700; text-decoration: none; transition: top .15s;
+  }
+  .skip:focus { top: 12px; }
+  main:focus { outline: none; }
 </style>

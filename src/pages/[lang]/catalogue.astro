@@ -1,18 +1,21 @@
 ---
 import Base from '../../layouts/Base.astro';
 import RestaurantCard from '../../components/RestaurantCard.astro';
-import { t, langPaths, type Lang } from '../../lib/i18n';
-import { restaurants, areaKey, areaLabel, HAS_RATINGS } from '../../lib/restaurants';
+import { t, tf, langPaths, type Lang } from '../../lib/i18n';
+import { restaurants, areaKey, areaLabel, cuisineLabel, topCities, HAS_RATINGS } from '../../lib/restaurants';
 
 export const getStaticPaths = langPaths;
 const lang = Astro.params.lang as Lang;
 
 const areas = [...new Map(restaurants.map((r) => [areaKey(r), areaLabel(r, lang)])).entries()].sort(([a], [b]) => a.localeCompare(b));
-const cuisines = [...new Set(restaurants.map((r) => r.cuisine).filter(Boolean))].sort() as string[];
+const cuisines = ([...new Set(restaurants.map((r) => r.cuisine).filter(Boolean))] as string[])
+  .map((c) => ({ value: c, label: cuisineLabel(c, lang) }))
+  .sort((a, b) => a.label.localeCompare(b.label, lang));
 const prices = ['€', '€€', '€€€', '€€€€'].filter((p) => restaurants.some((r) => r.price === p));
 const all = t(lang, 'filters.all');
 ---
-<Base lang={lang} title={t(lang, 'catalogue.title')}>
+<Base lang={lang} title={tf(lang, 'seo.catalogue.title', { n: restaurants.length })}
+  description={tf(lang, 'seo.catalogue.description', { n: restaurants.length, cities: topCities(lang, 3).join(', ') })}>
   <section class="head">
     <div class="wrap">
       <h1>{t(lang, 'catalogue.title')}</h1>
@@ -46,7 +49,7 @@ const all = t(lang, 'filters.all');
         <label><span>{t(lang, 'filters.cuisine')}</span>
           <select name="cuisine">
             <option value="">{all}</option>
-            {cuisines.map((c) => <option value={c}>{c}</option>)}
+            {cuisines.map((c) => <option value={c.value}>{c.label}</option>)}
           </select>
         </label>
         <label><span>{t(lang, 'filters.price')}</span>
@@ -66,73 +69,74 @@ const all = t(lang, 'filters.all');
     </form>
   </div>
 
-  <section class="wrap results">
+  <section class="wrap results" aria-labelledby="results-title">
+    <h2 class="sr-only" id="results-title">{t(lang, 'catalogue.results')}</h2>
     <p class="count" aria-live="polite"><strong id="count">{restaurants.length}</strong> {t(lang, 'filters.results')}</p>
     <div class="grid" id="grid">
-      {restaurants.map((r) => <RestaurantCard r={r} lang={lang} />)}
+      {restaurants.map((r, i) => <RestaurantCard r={r} lang={lang} searchable priority={i === 0 ? 'high' : i < 4 ? 'eager' : undefined} />)}
     </div>
     <div class="empty" id="empty" hidden>
       <p>🫠 {t(lang, 'filters.empty')}</p>
       <button class="btn btn-accent" type="button" id="reset">{t(lang, 'filters.reset')}</button>
     </div>
   </section>
+  <script>
+    const form = document.getElementById('filters') as HTMLFormElement;
+    const grid = document.getElementById('grid')!;
+    const count = document.getElementById('count')!;
+    const empty = document.getElementById('empty')!;
+    const cards = [...grid.querySelectorAll<HTMLElement>('.card')];
+    const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+    // Les filtres vivent dans l'URL : un lien partagé garde la recherche.
+    const params = new URLSearchParams(location.search);
+    for (const [k, v] of params) {
+      const el = form.elements.namedItem(k) as HTMLInputElement | null;
+      if (el) el.value = v;
+    }
+
+    function apply() {
+      const f = new FormData(form);
+      const q = norm(String(f.get('q') || '').trim());
+      const minRating = Number(f.get('rating') || 0);
+      const area = String(f.get('area') || '');
+      const cuisine = String(f.get('cuisine') || '');
+      const price = String(f.get('price') || '');
+      const sort = String(f.get('sort') || 'date');
+
+      let shown = 0;
+      for (const c of cards) {
+        const d = c.dataset;
+        const ok =
+          (!q || norm(d.search!).includes(q)) &&
+          Number(d.rating) >= minRating &&
+          (!area || d.area === area) &&
+          (!cuisine || d.cuisine === cuisine) &&
+          (!price || d.price === price);
+        c.hidden = !ok;
+        if (ok) shown++;
+      }
+      const sorted = [...cards].sort((a, b) => {
+        if (sort === 'rating') return Number(b.dataset.rating) - Number(a.dataset.rating) || b.dataset.date!.localeCompare(a.dataset.date!);
+        if (sort === 'name') return a.dataset.name!.localeCompare(b.dataset.name!);
+        return b.dataset.date!.localeCompare(a.dataset.date!);
+      });
+      grid.append(...sorted);
+      count.textContent = String(shown);
+      empty.hidden = shown > 0;
+
+      const next = new URLSearchParams();
+      for (const [k, v] of f) if (v && !(k === 'rating' && v === '0') && !(k === 'sort' && v === 'date')) next.set(k, String(v));
+      history.replaceState(null, '', next.size ? `?${next}` : location.pathname);
+    }
+
+    form.addEventListener('input', apply);
+    form.addEventListener('change', apply);
+    document.getElementById('reset')!.addEventListener('click', () => { form.reset(); apply(); });
+    apply();
+  </script>
 </Base>
 
-<script>
-  const form = document.getElementById('filters') as HTMLFormElement;
-  const grid = document.getElementById('grid')!;
-  const count = document.getElementById('count')!;
-  const empty = document.getElementById('empty')!;
-  const cards = [...grid.querySelectorAll<HTMLElement>('.card')];
-  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-
-  // Les filtres vivent dans l'URL : un lien partagé garde la recherche.
-  const params = new URLSearchParams(location.search);
-  for (const [k, v] of params) {
-    const el = form.elements.namedItem(k) as HTMLInputElement | null;
-    if (el) el.value = v;
-  }
-
-  function apply() {
-    const f = new FormData(form);
-    const q = norm(String(f.get('q') || '').trim());
-    const minRating = Number(f.get('rating') || 0);
-    const area = String(f.get('area') || '');
-    const cuisine = String(f.get('cuisine') || '');
-    const price = String(f.get('price') || '');
-    const sort = String(f.get('sort') || 'date');
-
-    let shown = 0;
-    for (const c of cards) {
-      const d = c.dataset;
-      const ok =
-        (!q || norm(d.search!).includes(q)) &&
-        Number(d.rating) >= minRating &&
-        (!area || d.area === area) &&
-        (!cuisine || d.cuisine === cuisine) &&
-        (!price || d.price === price);
-      c.hidden = !ok;
-      if (ok) shown++;
-    }
-    const sorted = [...cards].sort((a, b) => {
-      if (sort === 'rating') return Number(b.dataset.rating) - Number(a.dataset.rating) || b.dataset.date!.localeCompare(a.dataset.date!);
-      if (sort === 'name') return a.dataset.name!.localeCompare(b.dataset.name!);
-      return b.dataset.date!.localeCompare(a.dataset.date!);
-    });
-    grid.append(...sorted);
-    count.textContent = String(shown);
-    empty.hidden = shown > 0;
-
-    const next = new URLSearchParams();
-    for (const [k, v] of f) if (v && !(k === 'rating' && v === '0') && !(k === 'sort' && v === 'date')) next.set(k, String(v));
-    history.replaceState(null, '', next.size ? `?${next}` : location.pathname);
-  }
-
-  form.addEventListener('input', apply);
-  form.addEventListener('change', apply);
-  document.getElementById('reset')!.addEventListener('click', () => { form.reset(); apply(); });
-  apply();
-</script>
 
 <style>
   .head { background: linear-gradient(160deg, var(--blue) 0%, var(--blue-deep) 100%); color: #fff; padding: 48px 0 40px; }

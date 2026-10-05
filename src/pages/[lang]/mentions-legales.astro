@@ -1,6 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { t, langPaths, type Lang } from '../../lib/i18n';
+import { t, colon, langPaths, type Lang } from '../../lib/i18n';
 import { SITE } from '../../lib/site';
 
 export const getStaticPaths = langPaths;
@@ -13,7 +13,7 @@ const updated = { fr: '5 octobre 2026', en: '5 October 2026' }[lang];
   <section class="head">
     <div class="wrap">
       <h1>{t(lang, 'legal.title')}</h1>
-      <p>{lang === 'fr' ? 'Dernière mise à jour' : 'Last updated'} : {updated}</p>
+      <p>{lang === 'fr' ? 'Dernière mise à jour' : 'Last updated'}{colon(lang)} {updated}</p>
     </div>
   </section>
 

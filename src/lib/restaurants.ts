@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import data from '../../data/restaurants.json';
 import type { Lang } from './i18n';
 
@@ -29,8 +31,14 @@ export const restaurants: Restaurant[] = [...(data.restaurants as Restaurant[])]
   b.date.localeCompare(a.date),
 );
 
+/** Noms de ville du CSV (en anglais) traduits pour le site FR. */
+const CITY_FR: Record<string, string> = { London: 'Londres', 'Mexico City': 'Mexico' };
+export function cityLabel(city: string, lang: Lang): string {
+  return lang === 'fr' ? CITY_FR[city] ?? city : city;
+}
+
 export function areaLabel(r: Restaurant, lang: Lang): string {
-  if (r.arrondissement == null) return r.city;
+  if (r.arrondissement == null) return cityLabel(r.city, lang);
   const n = r.arrondissement;
   if (lang === 'fr') return `Paris ${n}${n === 1 ? 'er' : 'e'}`;
   const suffix = n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th';
@@ -63,9 +71,16 @@ export function formatRating(rating: number | null, lang: Lang): string {
 export function stats() {
   const rated = restaurants.filter((r) => r.rating != null);
   const avg = rated.reduce((s, r) => s + (r.rating as number), 0) / (rated.length || 1);
-  const areas = new Set(restaurants.map(areaKey));
+  const arrondissements = new Set(restaurants.map((r) => r.arrondissement).filter((n) => n != null));
   const cities = new Set(restaurants.map((r) => r.city).filter(Boolean));
-  return { count: restaurants.length, areas: areas.size, cities: cities.size, avg };
+  return { count: restaurants.length, arrondissements: arrondissements.size, cities: cities.size, avg };
+}
+
+/** Villes les plus fournies, dans la langue de la page (descriptions pour Google et les aperçus). */
+export function topCities(lang: Lang, n = 4): string[] {
+  const counts = new Map<string, number>();
+  for (const r of restaurants) if (r.city) counts.set(r.city, (counts.get(r.city) ?? 0) + 1);
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([c]) => cityLabel(c, lang));
 }
 
 /** Villes, de la plus fournie à la moins fournie, avec l'emprise de leurs épingles (boutons de la carte). */
@@ -109,6 +124,21 @@ const CUISINE_EMOJI: Record<string, string> = {
   Tapas: '🥘', 'Bar à vin': '🍷', 'Bar à cocktails': '🍸', 'Beach club': '🏝️',
   Viande: '🥩', Burger: '🍔', 'Food market': '🛍️', 'Street food': '🥙', Pâtisserie: '🧁', Végétarien: '🥗',
 };
+/** Nom anglais des cuisines (le CSV les écrit en français). Une cuisine absente d'ici garde son nom français. */
+const CUISINE_EN: Record<string, string> = {
+  'Matcha & café': 'Matcha & coffee', Boulangerie: 'Bakery', Brunch: 'Brunch', Healthy: 'Healthy',
+  Italien: 'Italian', Français: 'French', Brasserie: 'Brasserie', Bistrot: 'Bistro', Gastronomique: 'Fine dining',
+  Japonais: 'Japanese', Chinois: 'Chinese', Thaï: 'Thai', Taïwanais: 'Taiwanese', Asiatique: 'Asian', Indien: 'Indian', Coréen: 'Korean', Vietnamien: 'Vietnamese',
+  Méditerranéen: 'Mediterranean', Libanais: 'Lebanese', Turc: 'Turkish', Israélien: 'Israeli', Grec: 'Greek',
+  Mexicain: 'Mexican', 'Sud-américain': 'South American', Péruvien: 'Peruvian',
+  Tapas: 'Tapas', 'Bar à vin': 'Wine bar', 'Bar à cocktails': 'Cocktail bar', 'Beach club': 'Beach club',
+  Viande: 'Grill & meat', Burger: 'Burgers', 'Food market': 'Food market', 'Street food': 'Street food', Pâtisserie: 'Pastry', Végétarien: 'Vegetarian',
+};
+export function cuisineLabel(cuisine: string | null, lang: Lang): string {
+  if (!cuisine) return '';
+  return lang === 'en' ? CUISINE_EN[cuisine] ?? cuisine : cuisine;
+}
+
 export function cuisineEmoji(cuisine: string | null): string {
   return (cuisine && CUISINE_EMOJI[cuisine]) || '🍴';
 }
@@ -140,11 +170,49 @@ export function mapPoints(lang: Lang) {
       ratingLabel: r.rating == null ? '' : formatRating(r.rating, lang),
       color: ratingColor(r.rating),
       area: areaLabel(r, lang),
-      cuisine: r.cuisine,
+      cuisine: cuisineLabel(r.cuisine, lang) || null,
+      sponsored: isSponsored(r),
       emoji: cuisineEmoji(r.cuisine),
       family: familyOf(r.cuisine),
-      photo: r.photos[0] ? thumb(r.photos[0]) : null,
+      photo: pinPhoto(r),
     }));
+}
+
+/** Fichier de public/ produit par scripts/make_images.py (absent tant que le script n'a pas tourné). */
+const generated = (path: string) => existsSync(join(process.cwd(), 'public', path));
+
+/** Vignette 128 px des épingles, sinon la vignette 480 px. */
+function pinPhoto(r: Restaurant): string | null {
+  if (!r.photos[0]) return null;
+  return generated(`pins/${r.slug}.webp`) ? `pins/${r.slug}.webp` : thumb(r.photos[0]);
+}
+
+/** Image d'aperçu (partage du lien) : celle de la fiche, sinon celle du site. */
+export function ogImage(lang: Lang, slug?: string): string | undefined {
+  if (slug && generated(`og/${lang}/${slug}.jpg`)) return `og/${lang}/${slug}.jpg`;
+  return generated(`og/${lang}/default.jpg`) ? `og/${lang}/default.jpg` : undefined;
+}
+
+/** Description de la fiche pour Google et les aperçus : « Nom (quartier, cuisine) : début de l'avis… »,
+ * sans émoji ni retour à la ligne, 155 caractères au plus, coupée après un mot entier. */
+export function metaDescription(r: Restaurant, lang: Lang): string {
+  const head = `${r.name.replace(/\s+/g, ' ')} (${[areaLabel(r, lang), cuisineLabel(r.cuisine, lang)].filter(Boolean).join(', ')})`;
+  const sep = lang === 'fr' ? ' : ' : ': ';
+  // Chaque ligne de l'avis devient une phrase (sinon deux phrases se collent une fois les retours à la ligne retirés).
+  const text = reviewText(r, lang)
+    .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}\u{20E3}]/gu, '')
+    .split(/\n+/)
+    .map((line) => line.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .map((line, i, all) => (i < all.length - 1 && !/[.!?…:;,]$/.test(line) ? `${line}.` : line))
+    .join(' ');
+  // Un avis réduit à un prix (« ~€10/20 ») n'apprend rien : on le remplace par une phrase type.
+  const useful = /[\p{L}]{4,}/u.test(text) && text.length >= 40;
+  const fallback = lang === 'fr' ? 'notre avis, les photos et l’adresse.' : 'our review, photos and address.';
+  const full = head + sep + (useful ? text : fallback);
+  if (full.length <= 155) return full;
+  const cut = full.slice(0, 154);
+  return cut.slice(0, cut.lastIndexOf(' ')).replace(/[\s,;:.\-–—]+$/, '') + '…';
 }
 
 /** Vignette carrée générée par l'import (sinon l'image d'origine, ex. visuels de démo). */

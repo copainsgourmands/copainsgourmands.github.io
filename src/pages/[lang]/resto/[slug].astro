@@ -3,8 +3,9 @@ import Base from '../../../layouts/Base.astro';
 import StarRating from '../../../components/StarRating.astro';
 import RestaurantCard from '../../../components/RestaurantCard.astro';
 import MapView from '../../../components/MapView.astro';
-import { t, url, LANGS, formatMonth, type Lang } from '../../../lib/i18n';
-import { restaurants, areaLabel, mapPoints, isSponsored, reviewIn, reviewText, type Restaurant } from '../../../lib/restaurants';
+import { t, tf, url, colon, LANGS, formatMonth, type Lang } from '../../../lib/i18n';
+import { restaurants, areaLabel, mapPoints, isSponsored, reviewIn, reviewText, cuisineLabel, metaDescription, ogImage, type Restaurant } from '../../../lib/restaurants';
+import { SITE } from '../../../lib/site';
 
 export function getStaticPaths() {
   return LANGS.flatMap((lang) => restaurants.map((r) => ({ params: { lang, slug: r.slug }, props: { r } })));
@@ -18,6 +19,44 @@ const sponsored = isSponsored(r);
 const reviewParts = reviewText(r, lang).split(/(@[\w.]*\w)/g);
 const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${r.name} ${r.address}`)}`;
 const others_addresses = r.other_addresses ?? [];
+const name = r.name.replace(/\s+/g, ' ');
+const area = areaLabel(r, lang);
+const cuisine = cuisineLabel(r.cuisine, lang);
+const newTab = t(lang, 'a11y.newTab');
+
+// Données structurées pour Google : l'avis, le restaurant (adresse, position, cuisine…) et le fil d'Ariane.
+const abs = (p: string) => new URL(url(p), Astro.site).href;
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Review',
+      inLanguage: lang,
+      datePublished: r.date,
+      url: abs(`${lang}/resto/${r.slug}/`),
+      author: { '@type': 'Organization', name: SITE.name, url: abs(`${lang}/`), sameAs: [SITE.instagram] },
+      reviewBody: reviewText(r, lang) || undefined,
+      itemReviewed: {
+        '@type': 'Restaurant',
+        name,
+        image: r.photos[0] ? abs(r.photos[0]) : undefined,
+        servesCuisine: cuisine || undefined,
+        priceRange: r.price || undefined,
+        address: r.address ? { '@type': 'PostalAddress', streetAddress: r.address, addressLocality: r.city || undefined } : undefined,
+        geo: r.lat != null && r.lng != null ? { '@type': 'GeoCoordinates', latitude: r.lat, longitude: r.lng } : undefined,
+        sameAs: r.instagram_handle ? [`https://www.instagram.com/${r.instagram_handle}/`] : undefined,
+      },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: t(lang, 'breadcrumb.home'), item: abs(`${lang}/`) },
+        { '@type': 'ListItem', position: 2, name: t(lang, 'nav.catalogue'), item: abs(`${lang}/catalogue/`) },
+        { '@type': 'ListItem', position: 3, name },
+      ],
+    },
+  ],
+};
 
 // Suggestions : même quartier ou même cuisine, puis les mieux notés.
 const others = restaurants
@@ -27,33 +66,42 @@ const others = restaurants
   .slice(0, 3)
   .map((x) => x.o);
 ---
-<Base lang={lang} title={r.name} description={reviewText(r, lang).slice(0, 155)}>
+<Base lang={lang} title={tf(lang, 'seo.resto.title', { name, area })} description={metaDescription(r, lang)}
+  image={ogImage(lang, r.slug)} imageAlt={`${name}, ${area}`} type="article" published={r.date} schema={schema}>
   <article class="wrap resto">
     <a class="back link-arrow" href={url(`${lang}/catalogue/`)}>← {t(lang, 'resto.back')}</a>
 
     <div class="layout">
-      <div class="gallery">
-        <div class="slides" id="slides">
-          {r.photos.map((p, i) => <img src={url(p)} alt={`${r.name} – ${i + 1}`} loading={i ? 'lazy' : 'eager'} />)}
+      <div class="gallery" role="group" aria-roledescription="carousel" aria-label={`${t(lang, 'gallery.label')} – ${name}`}>
+        <div class="slides" id="slides" tabindex="0">
+          {r.photos.map((p, i) => (
+            <img src={url(p)} alt={`${name} – ${i + 1}/${r.photos.length}`} width="900" height="1200" decoding="async"
+              loading={i ? 'lazy' : 'eager'} fetchpriority={i ? undefined : 'high'} />
+          ))}
         </div>
         {r.photos.length > 1 && (
-          <div class="dots" id="dots">
-            {r.photos.map((_, i) => <button type="button" aria-label={`Photo ${i + 1}`} class:list={{ on: i === 0 }}></button>)}
-          </div>
+          <>
+            <button type="button" class="arrow prev" id="prev" aria-label={t(lang, 'gallery.prev')} hidden>‹</button>
+            <button type="button" class="arrow next" id="next" aria-label={t(lang, 'gallery.next')}>›</button>
+            <p class="counter" aria-live="polite"><span id="current">1</span> / {r.photos.length}</p>
+            <div class="dots" id="dots" aria-hidden="true">
+              {r.photos.map((_, i) => <span class:list={{ on: i === 0 }}></span>)}
+            </div>
+          </>
         )}
       </div>
 
       <div class="info">
-        <span class="sticker">{areaLabel(r, lang)}</span>
-        <h1>{r.name}</h1>
+        <span class="sticker">{area}</span>
+        <h1>{name}</h1>
         <div class="chips">
-          {r.cuisine && <span>{r.cuisine}</span>}
+          {cuisine && <span>{cuisine}</span>}
           {r.price && <span>{r.price}</span>}
           <span>{t(lang, 'resto.visited')} {formatMonth(r.date, lang)}</span>
         </div>
 
         {sponsored && (
-          <p class="collab"><strong>🤝 {t(lang, 'collab.label')}</strong> · {t(lang, 'collab.detail')}</p>
+          <p class="collab"><strong><span aria-hidden="true">🤝</span> {t(lang, 'collab.label')}</strong> · {t(lang, 'collab.detail')}</p>
         )}
 
         {r.rating != null && (
@@ -65,35 +113,35 @@ const others = restaurants
 
         {reviewIn(r, lang) && (
           <div class="review">
-            <p class="label">{t(lang, 'resto.myReview')}</p>
+            <h2 class="label">{t(lang, 'resto.myReview')}</h2>
             <blockquote>
               {reviewParts.map((part) =>
                 part.startsWith('@')
-                  ? <a href={`https://www.instagram.com/${part.slice(1)}/`} target="_blank" rel="noopener">{part}</a>
+                  ? <a href={`https://www.instagram.com/${part.slice(1)}/`} target="_blank" rel="noopener">{part}<span class="sr-only"> {newTab}</span></a>
                   : part,
               )}
             </blockquote>
           </div>
         )}
 
-        {r.address && <p class="address"><strong>{t(lang, 'resto.address')} :</strong> {r.address}</p>}
+        {r.address && <p class="address"><strong>{t(lang, 'resto.address')}{colon(lang)}</strong> {r.address}</p>}
         {others_addresses.length > 0 && (
           <div class="others">
-            <p><strong>{t(lang, others_addresses.length > 1 ? 'resto.otherAddresses' : 'resto.otherAddress')} :</strong></p>
+            <p><strong>{t(lang, others_addresses.length > 1 ? 'resto.otherAddresses' : 'resto.otherAddress')}{colon(lang)}</strong></p>
             <ul>{others_addresses.map((a) => <li>{a}</li>)}</ul>
           </div>
         )}
         <div class="actions">
-          <a class="btn btn-blue" href={mapsUrl} target="_blank" rel="noopener">🧭 {t(lang, 'resto.directions')}</a>
-          {r.instagram_url && <a class="btn btn-accent" href={r.instagram_url} target="_blank" rel="noopener">📸 {t(lang, 'resto.instagram')}</a>}
-          {r.instagram_handle && <a class="btn" href={`https://www.instagram.com/${r.instagram_handle}/`} target="_blank" rel="noopener">@{r.instagram_handle}</a>}
+          <a class="btn btn-blue" href={mapsUrl} target="_blank" rel="noopener"><span aria-hidden="true">🧭</span> {t(lang, 'resto.directions')}<span class="sr-only"> {newTab}</span></a>
+          {r.instagram_url && <a class="btn btn-accent" href={r.instagram_url} target="_blank" rel="noopener"><span aria-hidden="true">📸</span> {t(lang, 'resto.instagram')}<span class="sr-only"> {newTab}</span></a>}
+          {r.instagram_handle && <a class="btn" href={`https://www.instagram.com/${r.instagram_handle}/`} target="_blank" rel="noopener">@{r.instagram_handle}<span class="sr-only"> {newTab}</span></a>}
         </div>
       </div>
     </div>
 
     {point && (
       <div class="mini-map">
-        <MapView points={[point]} lang={lang} height="300px" zoom={15} center={[r.lat!, r.lng!]} cluster={false} />
+        <MapView points={[point]} lang={lang} height="300px" zoom={15} center={[r.lat!, r.lng!]} cluster={false} embedded />
       </div>
     )}
 
@@ -104,19 +152,33 @@ const others = restaurants
       </section>
     )}
   </article>
+  <script>
+    // Galerie : défilement au doigt, flèches (souris), touches ← → et compteur.
+    const slides = document.getElementById('slides');
+    const dots = document.querySelectorAll<HTMLElement>('#dots span');
+    const prev = document.getElementById('prev') as HTMLButtonElement | null;
+    const next = document.getElementById('next') as HTMLButtonElement | null;
+    const current = document.getElementById('current');
+    if (slides && dots.length) {
+      const go = (i: number) => slides.scrollTo({ left: i * slides.clientWidth, behavior: 'smooth' });
+      const index = () => Math.round(slides.scrollLeft / slides.clientWidth);
+      prev?.addEventListener('click', () => go(index() - 1));
+      next?.addEventListener('click', () => go(index() + 1));
+      slides.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); go(index() - 1); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); go(index() + 1); }
+      });
+      slides.addEventListener('scroll', () => {
+        const i = index();
+        dots.forEach((d, j) => d.classList.toggle('on', i === j));
+        if (current) current.textContent = String(i + 1);
+        if (prev) prev.hidden = i === 0;
+        if (next) next.hidden = i === dots.length - 1;
+      }, { passive: true });
+    }
+  </script>
 </Base>
 
-<script>
-  const slides = document.getElementById('slides');
-  const dots = document.querySelectorAll<HTMLButtonElement>('#dots button');
-  if (slides && dots.length) {
-    dots.forEach((d, i) => d.addEventListener('click', () => slides.scrollTo({ left: i * slides.clientWidth, behavior: 'smooth' })));
-    slides.addEventListener('scroll', () => {
-      const i = Math.round(slides.scrollLeft / slides.clientWidth);
-      dots.forEach((d, j) => d.classList.toggle('on', i === j));
-    }, { passive: true });
-  }
-</script>
 
 <style>
   .resto { padding-top: 24px; }
@@ -127,13 +189,31 @@ const others = restaurants
   .slides { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
   .slides::-webkit-scrollbar { display: none; }
   .slides img { flex: 0 0 100%; width: 100%; aspect-ratio: 1; object-fit: cover; scroll-snap-align: start; }
-  .dots { position: absolute; bottom: 12px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; }
-  .dots button { width: 8px; height: 8px; border-radius: 50%; border: 0; background: rgba(255,255,255,.6); padding: 0; cursor: pointer; transition: width .25s, background-color .25s; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
-  .dots button.on { background: #fff; width: 22px; border-radius: 99px; }
+  .slides:focus-visible { outline-offset: -4px; }
+  .dots { position: absolute; bottom: 14px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; pointer-events: none; }
+  .dots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.6); transition: width .25s, background-color .25s; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+  .dots span.on { background: #fff; width: 22px; border-radius: 99px; }
+  /* Trop de photos pour des points lisibles : le compteur suffit. */
+  .dots:has(span:nth-child(9)) { display: none; }
+  .counter {
+    position: absolute; top: 12px; right: 12px; margin: 0; padding: 3px 10px; border-radius: 999px;
+    background: rgba(16, 22, 46, .6); color: #fff; font-size: .8rem; font-weight: 600; font-variant-numeric: tabular-nums;
+  }
+  .arrow {
+    position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 0;
+    background: rgba(255, 255, 255, .92); color: var(--blue); font-size: 1.8rem; line-height: 1; padding: 0 0 4px; cursor: pointer;
+    box-shadow: 0 4px 14px -4px rgba(0, 0, 0, .45); transition: background-color .2s, transform .2s;
+  }
+  .arrow:hover { background: #fff; transform: translateY(-50%) scale(1.06); }
+  .arrow[hidden] { display: none; }
+  .prev { left: 12px; }
+  .next { right: 12px; }
+  /* Au doigt, on fait glisser les photos : les flèches ne servent qu'à la souris. */
+  @media (hover: none) { .arrow { display: none; } }
   h1 { font-size: clamp(2.4rem, 6vw, 4rem); margin: 14px 0 12px; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .chips span { border-radius: 999px; padding: 4px 13px; font-size: .85rem; font-weight: 500; color: var(--blue); background: var(--blue-soft); }
-  .label { text-transform: uppercase; letter-spacing: .14em; font-size: .72rem; font-weight: 700; color: var(--ink-soft); margin: 0 0 6px; }
+  .label { font-family: var(--font-body); line-height: 1.55; text-transform: uppercase; letter-spacing: .14em; font-size: .72rem; font-weight: 700; color: var(--ink-soft); margin: 0 0 6px; }
   .rating-box { margin: 26px 0; padding: 16px 20px; border-radius: var(--radius-sm); background: var(--accent); color: #fff; display: inline-block; }
   .rating-box :global(.fill) { color: #fff; }
   .rating-box :global(.track) { color: rgba(255, 255, 255, .3); }

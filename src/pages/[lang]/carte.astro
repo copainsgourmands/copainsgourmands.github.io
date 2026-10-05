@@ -1,8 +1,8 @@
 ---
 import Base from '../../layouts/Base.astro';
 import MapView from '../../components/MapView.astro';
-import { t, langPaths, type Lang } from '../../lib/i18n';
-import { mapPoints, cityGroups, HAS_RATINGS, FAMILIES } from '../../lib/restaurants';
+import { t, tf, langPaths, type Lang } from '../../lib/i18n';
+import { mapPoints, cityGroups, cityLabel, topCities, restaurants, HAS_RATINGS, FAMILIES } from '../../lib/restaurants';
 
 export const getStaticPaths = langPaths;
 const lang = Astro.params.lang as Lang;
@@ -19,31 +19,66 @@ const legend = [
   { c: '#E5938C', l: '< 3' },
 ];
 ---
-<Base lang={lang} title={t(lang, 'map.title')} fullBleed>
+<Base lang={lang} title={tf(lang, 'seo.map.title', { n: restaurants.length })}
+  description={tf(lang, 'seo.map.description', { cities: topCities(lang, 4).join(', ') })} fullBleed>
+  <link slot="head" rel="preconnect" href="https://tile.openstreetmap.org" crossorigin />
   <div class="map-page">
     <div class="overlay">
       <h1>{t(lang, 'map.title')}</h1>
-      <p>{points.length} 📍 · {t(lang, 'map.subtitle')}</p>
+      <p>{points.length} <span aria-hidden="true">📍</span> · {t(lang, 'map.subtitle')}</p>
       {HAS_RATINGS && (
         <ul class="legend" aria-label={t(lang, 'map.legend')}>
           {legend.map((x) => <li><i style={`background:${x.c}`}></i>{x.l}</li>)}
         </ul>
       )}
       <div class="view" role="group" aria-label={t(lang, 'map.view')}>
-        <button type="button" data-mode="photo" class="on">📷 {t(lang, 'map.photos')}</button>
-        <button type="button" data-mode="label">🏷️ {t(lang, 'map.labels')}</button>
+        <button type="button" data-mode="photo" class="on" aria-pressed="true"><span aria-hidden="true">📷</span> {t(lang, 'map.photos')}</button>
+        <button type="button" data-mode="label" aria-pressed="false"><span aria-hidden="true">🏷️</span> {t(lang, 'map.labels')}</button>
       </div>
-      <div class="families" aria-label={t(lang, 'map.filter')}>
-        {families.map((f) => <button type="button" data-family={f.id}>{f.emoji} {f[lang]} <small>{f.count}</small></button>)}
+      <div class="families" role="group" aria-label={t(lang, 'map.filter')}>
+        {families.map((f) => <button type="button" data-family={f.id} aria-pressed="false"><span aria-hidden="true">{f.emoji}</span> {f[lang]} <small>{f.count}</small></button>)}
       </div>
       {cities.length > 1 && (
-        <div class="cities" aria-label={t(lang, 'map.cities')}>
-          {cities.map((c) => <button type="button" data-bounds={JSON.stringify(c.bounds)}>{c.city} <small>{c.count}</small></button>)}
+        <div class="cities" role="group" aria-label={t(lang, 'map.cities')}>
+          {cities.map((c) => <button type="button" data-bounds={JSON.stringify(c.bounds)}>{cityLabel(c.city, lang)} <small>{c.count}</small></button>)}
         </div>
       )}
     </div>
     <MapView points={points} lang={lang} height="100%" zoom={13} center={[48.873, 2.3522]} />
   </div>
+  <script>
+    const mapEl = document.querySelector<HTMLElement>('.map-page [data-map]');
+
+    // Photos ou noms sur les épingles.
+    const views = document.querySelectorAll<HTMLButtonElement>('.view button');
+    views.forEach((b) => b.addEventListener('click', () => {
+      views.forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+      if (mapEl) mapEl.dataset.mode = b.dataset.mode;
+    }));
+
+    // Filtre par type de cuisine : un clic sur le bouton actif réaffiche tout.
+    const fams = document.querySelectorAll<HTMLButtonElement>('.families button');
+    fams.forEach((b) => b.addEventListener('click', () => {
+      const active = !b.classList.contains('on');
+      fams.forEach((x) => { x.classList.toggle('on', active && x === b); x.setAttribute('aria-pressed', String(active && x === b)); });
+      if (!mapEl) return;
+      mapEl.dataset.family = active ? b.dataset.family : '';
+      mapEl.dispatchEvent(new CustomEvent('map:filter', { detail: active ? b.dataset.family : null }));
+    }));
+
+    // Lien partageable : ?vue=noms&type=italien
+    const params = new URLSearchParams(location.search);
+    if (params.get('vue') === 'noms') document.querySelector<HTMLButtonElement>('.view [data-mode="label"]')?.click();
+    const fam = params.get('type');
+    if (fam) document.querySelector<HTMLButtonElement>(`.families [data-family="${CSS.escape(fam)}"]`)?.click();
+
+    // Les boutons de ville recadrent la carte (écouté par MapView via l'événement « map:fit »).
+    const buttons = document.querySelectorAll<HTMLButtonElement>('.cities button');
+    buttons.forEach((b) => b.addEventListener('click', () => {
+      buttons.forEach((x) => x.classList.toggle('on', x === b));
+      document.querySelector('.map-page [data-map]')?.dispatchEvent(new CustomEvent('map:fit', { detail: JSON.parse(b.dataset.bounds!) }));
+    }));
+  </script>
 </Base>
 
 <style>
@@ -91,39 +126,6 @@ const legend = [
   .families button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 </style>
 
-<script>
-  const mapEl = document.querySelector<HTMLElement>('.map-page [data-map]');
-
-  // Photos ou noms sur les épingles.
-  const views = document.querySelectorAll<HTMLButtonElement>('.view button');
-  views.forEach((b) => b.addEventListener('click', () => {
-    views.forEach((x) => x.classList.toggle('on', x === b));
-    if (mapEl) mapEl.dataset.mode = b.dataset.mode;
-  }));
-
-  // Filtre par type de cuisine : un clic sur le bouton actif réaffiche tout.
-  const fams = document.querySelectorAll<HTMLButtonElement>('.families button');
-  fams.forEach((b) => b.addEventListener('click', () => {
-    const active = !b.classList.contains('on');
-    fams.forEach((x) => x.classList.toggle('on', active && x === b));
-    if (!mapEl) return;
-    mapEl.dataset.family = active ? b.dataset.family : '';
-    mapEl.dispatchEvent(new CustomEvent('map:filter', { detail: active ? b.dataset.family : null }));
-  }));
-
-  // Lien partageable : ?vue=noms&type=italien
-  const params = new URLSearchParams(location.search);
-  if (params.get('vue') === 'noms') document.querySelector<HTMLButtonElement>('.view [data-mode="label"]')?.click();
-  const fam = params.get('type');
-  if (fam) document.querySelector<HTMLButtonElement>(`.families [data-family="${CSS.escape(fam)}"]`)?.click();
-
-  // Les boutons de ville recadrent la carte (écouté par MapView via l'événement « map:fit »).
-  const buttons = document.querySelectorAll<HTMLButtonElement>('.cities button');
-  buttons.forEach((b) => b.addEventListener('click', () => {
-    buttons.forEach((x) => x.classList.toggle('on', x === b));
-    document.querySelector('.map-page [data-map]')?.dispatchEvent(new CustomEvent('map:fit', { detail: JSON.parse(b.dataset.bounds!) }));
-  }));
-</script>
 <style is:global>
   .map-page .leaflet-top.leaflet-left { top: auto; bottom: 24px; }
 </style>

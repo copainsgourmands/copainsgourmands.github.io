@@ -11,7 +11,7 @@ const { lang } = Astro.props;
       <p>{t(lang, 'footer.made')}</p>
       <p class="legal"><a href={url(`${lang}/mentions-legales/`)}>{t(lang, 'legal.title')}</a> · {t(lang, 'footer.nocookies')}</p>
     </div>
-    <a class="btn btn-accent" href={SITE.instagram} target="_blank" rel="noopener">📸 {t(lang, 'footer.follow')} · @{SITE.handle}</a>
+    <a class="btn btn-accent" href={SITE.instagram} target="_blank" rel="noopener"><span aria-hidden="true">📸</span> {t(lang, 'footer.follow')} · @{SITE.handle}<span class="sr-only"> {t(lang, 'a11y.newTab')}</span></a>
   </div>
 </footer>
 
