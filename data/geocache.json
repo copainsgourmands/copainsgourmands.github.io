@@ -541,5 +541,12 @@
   "postcode": "75116",
   "city": "Paris",
   "label": "25 Avenue Pierre Ier de Serbie 75116 Paris"
+ },
+ "ban:22 rue Royer-Collard, 75005 Paris": {
+  "lat": 48.846223,
+  "lng": 2.340626,
+  "postcode": "75005",
+  "city": "Paris",
+  "label": "22 Rue Royer-Collard 75005 Paris"
  }
 }

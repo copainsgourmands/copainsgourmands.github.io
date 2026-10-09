@@ -2589,6 +2589,37 @@
       ],
       "instagram_url": "https://www.instagram.com/p/DQUD-ZYDIZO/",
       "instagram_handle": "saladedespiece"
+    },
+    {
+      "slug": "nau-gh-tee",
+      "name": "nau(gh)tēe",
+      "address": "22 rue Royer-Collard, 75005 Paris",
+      "city": "Paris",
+      "arrondissement": 5,
+      "other_addresses": [],
+      "lat": 48.846223,
+      "lng": 2.340626,
+      "rating": null,
+      "review": "Si vous passez près du Jardin du Luxembourg, faites une pause dans ce coffee shop pour goûter leur matcha coco cloud🥥 qui vaut vraiment le détour, et leurs pâtisseries : cheesecake basque, cookie matcha chocolat blanc…\n\n~ boissons entre 2,6€ et 8,5€",
+      "review_en": "Si vous passez près du Jardin du Luxembourg, faites une pause dans ce coffee shop pour goûter leur matcha coco cloud🥥 qui vaut vraiment le détour, et leurs pâtisseries : cheesecake basque, cookie matcha chocolat blanc…\n\n~ boissons entre 2,6€ et 8,5€",
+      "cuisine": "Matcha & café",
+      "price": "€",
+      "date": "2026-10-09",
+      "photos": [
+        "photos/nau-gh-tee/0.webp",
+        "photos/nau-gh-tee/1.webp",
+        "photos/nau-gh-tee/2.webp",
+        "photos/nau-gh-tee/3.webp",
+        "photos/nau-gh-tee/4.webp",
+        "photos/nau-gh-tee/5.webp",
+        "photos/nau-gh-tee/6.webp",
+        "photos/nau-gh-tee/7.webp",
+        "photos/nau-gh-tee/8.webp",
+        "photos/nau-gh-tee/9.webp",
+        "photos/nau-gh-tee/10.webp"
+      ],
+      "instagram_url": "https://www.instagram.com/p/DeROWCWEYhJ/",
+      "instagram_handle": "naughtee.cafe"
     }
   ]
 }
