@@ -612,5 +612,12 @@
   "postcode": "75006",
   "city": "Paris",
   "label": "11 Rue de l'Odéon 75006 Paris"
+ },
+ "ban:9 place de la Madeleine, 75008 Paris": {
+  "lat": 48.869615,
+  "lng": 2.323165,
+  "postcode": "75008",
+  "city": "Paris",
+  "label": "9 Place de la Madeleine 75008 Paris"
  }
 }
