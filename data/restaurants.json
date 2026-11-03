@@ -2,6 +2,33 @@
   "demo": false,
   "restaurants": [
     {
+      "slug": "nino",
+      "name": "nino",
+      "address": "11 rue de l’Odéon, 75006 Paris",
+      "city": "Paris",
+      "arrondissement": 6,
+      "other_addresses": [],
+      "lat": 48.850911,
+      "lng": 2.338799,
+      "rating": null,
+      "review": "Tout près du jardin du Luxembourg, cette adresse italienne propose de très bons sandwichs dans un pain typique de la région des Pouilles. Une adresse qui fait aussi coffee shop, avec de très bons matchas, lattes, thés glacés… et surtout, de délicieux cookies et tiramisus maison !!\n\n~ sandwichs entre 5€ et 11,50€\n~ desserts entre 3€ et 4,5€\n~ boissons entre 2,5€ et 6€\n\n*invitation",
+      "review_en": "Tout près du jardin du Luxembourg, cette adresse italienne propose de très bons sandwichs dans un pain typique de la région des Pouilles. Une adresse qui fait aussi coffee shop, avec de très bons matchas, lattes, thés glacés… et surtout, de délicieux cookies et tiramisus maison !!\n\n~ sandwichs entre 5€ et 11,50€\n~ desserts entre 3€ et 4,5€\n~ boissons entre 2,5€ et 6€\n\n*invitation",
+      "cuisine": "Italien",
+      "price": "€",
+      "date": "2026-10-23",
+      "photos": [
+        "photos/nino/0.webp",
+        "photos/nino/1.webp",
+        "photos/nino/2.webp",
+        "photos/nino/3.webp",
+        "photos/nino/4.webp",
+        "photos/nino/5.webp",
+        "photos/nino/6.webp"
+      ],
+      "instagram_url": "https://www.instagram.com/p/De11IO9FyOB/",
+      "instagram_handle": "ninosandwichs"
+    },
+    {
       "slug": "d-a-y-z",
       "name": "D A Y Z",
       "address": "43 Rue La Fayette 75009, Paris",
@@ -2805,31 +2832,36 @@
       "instagram_handle": null
     },
     {
-      "slug": "nino",
-      "name": "nino",
-      "address": "11 rue de l’Odéon, 75006 Paris",
+      "slug": "lucas-carton",
+      "name": "Lucas Carton",
+      "address": "9 place de la Madeleine, 75008 Paris",
       "city": "Paris",
-      "arrondissement": 6,
+      "arrondissement": 8,
       "other_addresses": [],
-      "lat": 48.850911,
-      "lng": 2.338799,
+      "lat": 48.869615,
+      "lng": 2.323165,
       "rating": null,
-      "review": "Tout près du jardin du Luxembourg, cette adresse italienne propose de très bons sandwichs dans un pain typique de la région des Pouilles. Une adresse qui fait aussi coffee shop, avec de très bons matchas, lattes, thés glacés… et surtout, de délicieux cookies et tiramisus maison !!\n\n~ sandwichs entre 5€ et 11,50€\n~ desserts entre 3€ et 4,5€\n~ boissons entre 2,5€ et 6€\n\n*invitation",
-      "review_en": "Tout près du jardin du Luxembourg, cette adresse italienne propose de très bons sandwichs dans un pain typique de la région des Pouilles. Une adresse qui fait aussi coffee shop, avec de très bons matchas, lattes, thés glacés… et surtout, de délicieux cookies et tiramisus maison !!\n\n~ sandwichs entre 5€ et 11,50€\n~ desserts entre 3€ et 4,5€\n~ boissons entre 2,5€ et 6€\n\n*invitation",
-      "cuisine": "Italien",
-      "price": "€",
-      "date": "2026-10-23",
+      "review": "Un restaurant récompensé d’une étoile au Guide Michelin, une institution mythique parisienne depuis 1880, aujourd’hui aux commandes du chef Cyril Lignac ! Un cadre Art déco sublime et une cuisine délicieuse.\n\n~ entrées : entre 20 et 68 €\n~ plats : entre 30 et 85 €\n~ desserts : entre 25€ et 35€",
+      "review_en": "Un restaurant récompensé d’une étoile au Guide Michelin, une institution mythique parisienne depuis 1880, aujourd’hui aux commandes du chef Cyril Lignac ! Un cadre Art déco sublime et une cuisine délicieuse.\n\n~ entrées : entre 20 et 68 €\n~ plats : entre 30 et 85 €\n~ desserts : entre 25€ et 35€",
+      "cuisine": null,
+      "price": "€€€€",
+      "date": "2026-11-02",
       "photos": [
-        "photos/nino/0.webp",
-        "photos/nino/1.webp",
-        "photos/nino/2.webp",
-        "photos/nino/3.webp",
-        "photos/nino/4.webp",
-        "photos/nino/5.webp",
-        "photos/nino/6.webp"
+        "photos/lucas-carton/0.webp",
+        "photos/lucas-carton/1.webp",
+        "photos/lucas-carton/2.webp",
+        "photos/lucas-carton/3.webp",
+        "photos/lucas-carton/4.webp",
+        "photos/lucas-carton/5.webp",
+        "photos/lucas-carton/6.webp",
+        "photos/lucas-carton/7.webp",
+        "photos/lucas-carton/8.webp",
+        "photos/lucas-carton/9.webp",
+        "photos/lucas-carton/10.webp",
+        "photos/lucas-carton/11.webp"
       ],
-      "instagram_url": "https://www.instagram.com/p/De11IO9FyOB/",
-      "instagram_handle": "ninosandwichs"
+      "instagram_url": "https://www.instagram.com/p/DfP0IhVl0Xu/",
+      "instagram_handle": "lucascartonparis"
     }
   ]
 }
