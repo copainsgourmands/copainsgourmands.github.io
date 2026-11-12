@@ -1,4 +1,9 @@
 ﻿slug;inclure;statut;nom;note;cuisine;prix;adresse;autres_adresses;ville;arrondissement;lat;lng;date;avis;avis_en;instagram_resto;lien_instagram;photos;position;adresse_geocodee;sources_export
+suffren;oui;avis à traduire en anglais (colonne avis_en);Suffren;;Bistrot;€€;44 rue Saint-Suffren, 13006 Marseille;;Marseille;6;43.287315;5.381352;2026-11-03;"Ce bistrot niché sur une petite place du 6ème arrondissement de Marseille est une adresse recommandée par le Guide Michelin, avec une cuisine ouverte et un intérieur au décor brut et industriel. À découvrir lors de votre prochaine escapade marseillaise ! ☀️
+
+~ entrées entre 9€ et 13€
+~ plats entre 18€ et 20€
+~ desserts entre 7€ et 8€";;suffren.marseille;https://www.instagram.com/p/DfR9Jgfl9gZ/;photos/suffren/0.webp|photos/suffren/1.webp|photos/suffren/2.webp|photos/suffren/3.webp|photos/suffren/4.webp|photos/suffren/5.webp|photos/suffren/6.webp|photos/suffren/7.webp|photos/suffren/8.webp;adresse;44 rue Saint-Suffren, 13006 Marseille;18121038469957410.jpg|17938131345408035.jpg|18114044114175821.jpg|18147376222603655.jpg|17911743474484160.jpg|18484819348119241.jpg|17873287416646817.jpg|17910829878577005.jpg|17893181217457560.jpg
 lucas-carton;oui;avis à traduire en anglais (colonne avis_en);Lucas Carton;;;€€€€;9 place de la Madeleine, 75008 Paris;;Paris;8;48.869615;2.323165;2026-11-02;"Un restaurant récompensé d’une étoile au Guide Michelin, une institution mythique parisienne depuis 1880, aujourd’hui aux commandes du chef Cyril Lignac ! Un cadre Art déco sublime et une cuisine délicieuse.
 
 ~ entrées : entre 20 et 68 €

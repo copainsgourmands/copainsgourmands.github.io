@@ -619,5 +619,12 @@
   "postcode": "75008",
   "city": "Paris",
   "label": "9 Place de la Madeleine 75008 Paris"
+ },
+ "osmaddr:44 rue Saint-Suffren, 13006 Marseille": {
+  "lat": 43.2873146,
+  "lng": 5.381352,
+  "postcode": "13006",
+  "city": "Marseille",
+  "label": "44 Rue Saint-Suffren, 13006 Marseille"
  }
 }
