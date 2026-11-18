@@ -626,5 +626,12 @@
   "postcode": "13006",
   "city": "Marseille",
   "label": "44 Rue Saint-Suffren, 13006 Marseille"
+ },
+ "ban:58 rue du Faubourg Poissonnière, 75010 Paris": {
+  "lat": 48.875127,
+  "lng": 2.348203,
+  "postcode": "75010",
+  "city": "Paris",
+  "label": "58 Rue du Faubourg Poissonnière 75010 Paris"
  }
 }
